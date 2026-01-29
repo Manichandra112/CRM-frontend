@@ -22,12 +22,19 @@ const PostLoginRouter = () => {
     return <Navigate to="/access-denied" replace />;
   }
 
-  // ✅ ALL SOCIAL USERS → Social CRM entry
+  // ✅ SOCIAL USERS → Social Media CRM
   if (role.startsWith("SOCIAL")) {
-    return <Navigate to="/social/" replace />;
+  return <Navigate to="/crm/socialmedia" replace />;
+}
+  // SALES / HR (future)
+  if (role.startsWith("SALES")) {
+    return <Navigate to="/crm/sales" replace />;
   }
 
-  // SALES / HR later
+  if (role.startsWith("HR")) {
+    return <Navigate to="/crm/hr" replace />;
+  }
+
   return <Navigate to="/access-denied" replace />;
 };
 

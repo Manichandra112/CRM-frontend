@@ -1,6 +1,6 @@
 import axios from "axios";
 
-export const BASE_URL = "/api";
+export const BASE_URL = "https://unvolatilised-essie-straight.ngrok-free.dev/api";
 
 const api = axios.create({
   baseURL: BASE_URL,

@@ -1,60 +1,155 @@
 import { useEffect, useState } from "react";
-import {
-  getAdminUserDetails,
-  getAdminUserSecurity,
-  getAdminUserAuditLogs,
-} from "../../../api/admin.api";
 
-import UserDetailsTab from "./tabs/UserDetailsTab";
+import {
+  getAdminUserById,
+} from "../../../api/admin/users.api";
+
+import ProfileTab from "./tabs/ProfileTab";
+import RolesTab from "./tabs/RolesTab";
 import UserSecurityTab from "./tabs/UserSecurityTab";
 import UserAuditLogsTab from "./tabs/UserAuditLogsTab";
 
-const UserDrawer = ({ userId, onClose }) => {
-  const [tab, setTab] = useState("details");
-  const [details, setDetails] = useState(null);
-  const [security, setSecurity] = useState(null);
-  const [logs, setLogs] = useState([]);
+const TABS = [
+  { key: "profile", label: "Profile" },
+  { key: "roles", label: "Roles" },
+  { key: "security", label: "Security" },
+  { key: "audit", label: "Audit Logs" },
+];
 
+export default function UserDrawer({
+  open,
+  userId,
+  onClose,
+  onUserUpdated,
+}) {
+  const [activeTab, setActiveTab] = useState("profile");
+
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  /* =======================
+     FETCH USER DETAILS
+     ======================= */
   useEffect(() => {
-    if (!userId) return;
+    if (!open || !userId) return;
 
-    getAdminUserDetails(userId).then((r) => setDetails(r.data));
-    getAdminUserSecurity(userId).then((r) => setSecurity(r.data));
-    getAdminUserAuditLogs(userId).then((r) => setLogs(r.data));
-  }, [userId]);
+    const loadUser = async () => {
+      try {
+        setLoading(true);
+        setError(null);
 
-  if (!userId) return null;
+        const res = await getAdminUserById(userId);
+        setUser(res.data);
+      } catch (err) {
+        console.error("User load error:", err);
+        setError("Failed to load user details");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadUser();
+  }, [open, userId]);
+
+  /* =======================
+     RESET TAB ON USER CHANGE
+     ======================= */
+  useEffect(() => {
+    if (open) setActiveTab("profile");
+  }, [userId, open]);
+
+  if (!open) return null;
 
   return (
-    <div style={drawerStyle}>
-      <button onClick={onClose}>✕</button>
+    <div className="fixed inset-0 z-40 flex">
+      {/* BACKDROP */}
+      <div
+        className="fixed inset-0 bg-black/30"
+        onClick={onClose}
+      />
 
-      <div style={{ display: "flex", gap: 8 }}>
-        <button onClick={() => setTab("details")}>Details</button>
-        <button onClick={() => setTab("security")}>Security</button>
-        <button onClick={() => setTab("audit")}>Audit</button>
+      {/* DRAWER */}
+      <div className="ml-auto w-[480px] bg-white h-full shadow-xl relative z-50 flex flex-col">
+        {/* HEADER */}
+        <div className="border-b px-4 py-3 flex justify-between items-center">
+          <div>
+            <h3 className="text-sm font-semibold text-slate-800">
+              {user?.name || "User"}
+            </h3>
+            <p className="text-xs text-slate-500">{user?.email}</p>
+          </div>
+
+          <button
+            onClick={onClose}
+            className="text-slate-400 hover:text-slate-600"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* TABS */}
+        <div className="border-b flex text-sm">
+          {TABS.map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`px-4 py-2 border-b-2 ${
+                activeTab === tab.key
+                  ? "border-blue-600 text-blue-600"
+                  : "border-transparent text-slate-500 hover:text-slate-700"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* CONTENT */}
+        <div className="flex-1 overflow-y-auto p-4">
+          {loading && (
+            <div className="text-sm text-slate-500">
+              Loading user…
+            </div>
+          )}
+
+          {error && (
+            <div className="text-sm text-red-600">
+              {error}
+            </div>
+          )}
+
+          {!loading && user && (
+            <>
+              {activeTab === "profile" && (
+                <ProfileTab
+                  user={user}
+                  onUpdated={() => {
+                    onUserUpdated?.();
+                  }}
+                />
+              )}
+
+              {activeTab === "roles" && (
+                <RolesTab
+                  userId={userId}
+                  onUpdated={() => {
+                    onUserUpdated?.();
+                  }}
+                />
+              )}
+
+              {activeTab === "security" && (
+                <UserSecurityTab userId={userId} />
+              )}
+
+              {activeTab === "audit" && (
+                <UserAuditLogsTab userId={userId} />
+              )}
+            </>
+          )}
+        </div>
       </div>
-
-      <hr />
-
-      {tab === "details" && <UserDetailsTab data={details} />}
-      {tab === "security" && <UserSecurityTab data={security} />}
-      {tab === "audit" && <UserAuditLogsTab logs={logs} />}
     </div>
   );
-};
-
-const drawerStyle = {
-  position: "fixed",
-  top: 0,
-  right: 0,
-  width: 420,
-  height: "100vh",
-  background: "#fff",
-  borderLeft: "1px solid #ccc",
-  padding: 16,
-  overflowY: "auto",
-  zIndex: 1000,
-};
-
-export default UserDrawer;
+}

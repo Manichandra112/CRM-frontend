@@ -1,62 +1,51 @@
 import { Outlet, NavLink } from "react-router-dom";
-import { useAuth } from "../../auth/AuthContext";
 
-const AdminLayout = () => {
-  const { logout } = useAuth();
+const linkClass = ({ isActive }) =>
+  `block px-3 py-2 rounded text-sm font-medium transition
+   ${isActive
+     ? "bg-slate-700 text-blue-400"
+     : "text-slate-300 hover:bg-slate-700 hover:text-white"}`;
 
+export default function AdminLayout() {
   return (
-    <div style={{ display: "flex", minHeight: "100vh" }}>
-      {/* Sidebar */}
-      <aside
-        style={{
-          width: 240,
-          background: "#1f2937",
-          color: "#fff",
-          padding: 16,
-        }}
-      >
-        <h3>CRM Admin</h3>
+    <div className="flex min-h-screen bg-slate-100">
+      {/* SIDEBAR */}
+      <aside className="w-60 bg-slate-800 text-white flex flex-col">
+        <div className="px-4 py-4 border-b border-slate-700">
+          <h3 className="text-lg font-semibold tracking-wide">
+            CRM Admin
+          </h3>
+        </div>
 
-        <nav style={{ marginTop: 24 }}>
-          <NavLink to="/admin/users" style={navStyle}>
+        <nav className="flex-1 px-3 py-4 space-y-1">
+          <NavLink to="/admin/domains" className={linkClass}>
+            Domains
+          </NavLink>
+          <NavLink to="/admin/users" className={linkClass}>
             Users
           </NavLink>
-          <NavLink to="/admin/roles" style={navStyle}>
+          <NavLink to="/admin/roles" className={linkClass}>
             Roles
           </NavLink>
-          <NavLink to="/admin/permissions" style={navStyle}>
+          <NavLink to="/admin/permissions" className={linkClass}>
             Permissions
           </NavLink>
         </nav>
 
-        <button
-          onClick={logout}
-          style={{
-            marginTop: 32,
-            width: "100%",
-            padding: 8,
-            background: "#ef4444",
-            color: "#fff",
-            border: "none",
-          }}
-        >
-          Logout
-        </button>
+        <div className="p-4 border-t border-slate-700">
+          <button
+            onClick={() => (window.location.href = "/logout")}
+            className="w-full text-sm bg-red-500 hover:bg-red-600 rounded px-3 py-2"
+          >
+            Logout
+          </button>
+        </div>
       </aside>
 
-      {/* Content */}
-      <main style={{ flex: 1, padding: 24 }}>
+      {/* MAIN */}
+      <main className="flex-1 p-6">
         <Outlet />
       </main>
     </div>
   );
-};
-
-const navStyle = ({ isActive }) => ({
-  display: "block",
-  padding: "8px 0",
-  color: isActive ? "#60a5fa" : "#fff",
-  textDecoration: "none",
-});
-
-export default AdminLayout;
+}

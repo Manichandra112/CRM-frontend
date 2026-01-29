@@ -17,12 +17,12 @@ export default function Sidebar() {
       </h2>
 
       <nav style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-        <Link to="/dashboard">Dashboard</Link>
-        <Link to="/post/create">Create Post</Link>
-        <Link to="/post/multi">Multi-Page Post</Link>
-        <Link to="/analytics">Analytics</Link>
-        <Link to="/leads">Leads</Link>
-        <Link to="/leads/forms">Lead Forms</Link>
+        <Link to="/crm/socialmedia/dashboard">Dashboard</Link>
+        <Link to="/crm/socialmedia/post/create">Create Post</Link>
+        <Link to="/crm/socialmedia/post/multi">Multi-Page Post</Link>
+        <Link to="/crm/socialmedia/analytics">Analytics</Link>
+        <Link to="/crm/socialmedia/leads">Leads</Link>
+        <Link to="/crm/socialmedia/leads/forms">Lead Forms</Link>
 
       </nav>
     </div>

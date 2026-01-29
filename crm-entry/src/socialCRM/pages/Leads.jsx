@@ -20,7 +20,7 @@ export default function Leads() {
     getAvailablePages().then(setPages);
   }, []);
 
-  /* LOAD FORMS WHEN PAGE CHANGES */
+
   useEffect(() => {
     if (!filters.pageId) {
       setForms([]);
