@@ -31,7 +31,7 @@ export default function UserSecurityTab({ userId }) {
   }, [userId]);
 
   /* =======================
-     UI
+     UI STATES
      ======================= */
   if (loading) {
     return (
@@ -43,7 +43,7 @@ export default function UserSecurityTab({ userId }) {
 
   if (error) {
     return (
-      <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">
+      <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-3 py-2">
         {error}
       </div>
     );
@@ -57,49 +57,94 @@ export default function UserSecurityTab({ userId }) {
     );
   }
 
+  /* =======================
+     DERIVED VALUES
+     ======================= */
+  const isLocked = Boolean(security.lockedUntil);
+
+  /* =======================
+     MAIN UI
+     ======================= */
   return (
-    <div className="space-y-3 text-sm">
-      <div className="flex justify-between">
-        <span className="text-slate-500">Last Login</span>
-        <span className="text-slate-800">
-          {security.lastLogin
-            ? new Date(security.lastLogin).toLocaleString()
+    <div className="space-y-6 text-sm">
+
+      {/* =======================
+         ACTIVITY SUMMARY
+         ======================= */}
+      <div className="space-y-1">
+        <div className="text-slate-500">Last Login</div>
+        <div className="text-lg font-medium text-slate-900">
+          {security.lastLoginAt
+            ? new Date(security.lastLoginAt).toLocaleString()
             : "Never"}
-        </span>
-      </div>
+        </div>
 
-      <div className="flex justify-between">
-        <span className="text-slate-500">Failed Login Attempts</span>
-        <span className="text-slate-800">
-          {security.failedAttempts ?? 0}
-        </span>
-      </div>
-
-      <div className="flex justify-between">
-        <span className="text-slate-500">Account Status</span>
-        <span
-          className={`font-medium ${
-            security.isLocked
-              ? "text-red-600"
-              : "text-green-600"
+        <div
+          className={`inline-flex items-center text-sm font-medium ${
+            isLocked ? "text-red-600" : "text-green-600"
           }`}
         >
-          {security.isLocked ? "Locked" : "Active"}
-        </span>
+          {isLocked ? "Account Locked" : "Account Active"}
+        </div>
       </div>
 
-      <div className="flex justify-between">
-        <span className="text-slate-500">Password Reset Required</span>
-        <span className="text-slate-800">
-          {security.passwordResetRequired ? "Yes" : "No"}
-        </span>
+      {/* =======================
+         LOGIN DETAILS
+         ======================= */}
+      <div className="bg-slate-50 border border-slate-200 rounded-md p-4 space-y-3">
+        <div className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+          Login Details
+        </div>
+
+        <div className="flex justify-between gap-4">
+          <span className="text-slate-500">Device</span>
+          <span className="text-slate-800 text-right break-all max-w-[70%]">
+            {security.lastLoginDevice || "Unknown"}
+          </span>
+        </div>
+        <div className="flex justify-between">
+  <span className="text-slate-500">IP Address</span>
+  <span className="text-slate-800 font-mono">
+    {security.lastLoginIp || "Unknown"}
+  </span>
+</div>
+
+        <div className="flex justify-between">
+          <span className="text-slate-500">Location</span>
+          <span className="text-slate-800">
+            {security.lastLoginLocation || "Unknown"}
+          </span>
+        </div>
+
+        <div className="flex justify-between">
+          <span className="text-slate-500">Failed Login Attempts</span>
+          <span className="text-slate-800">
+            {security.failedLoginCount}
+          </span>
+        </div>
       </div>
 
-      <div className="flex justify-between">
-        <span className="text-slate-500">MFA Enabled</span>
-        <span className="text-slate-800">
-          {security.mfaEnabled ? "Yes" : "No"}
-        </span>
+      {/* =======================
+         SECURITY SETTINGS
+         ======================= */}
+      <div className="bg-slate-50 border border-slate-200 rounded-md p-4 space-y-3">
+        <div className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+          Security Settings
+        </div>
+
+        <div className="flex justify-between">
+          <span className="text-slate-500">Password Reset Required</span>
+          <span className="text-slate-800">
+            {security.forcePasswordReset ? "Yes" : "No"}
+          </span>
+        </div>
+
+        <div className="flex justify-between">
+          <span className="text-slate-500">MFA Enabled</span>
+          <span className="text-slate-800">
+            {security.mfaEnabled ? "Yes" : "No"}
+          </span>
+        </div>
       </div>
     </div>
   );

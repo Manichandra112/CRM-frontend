@@ -1,5 +1,5 @@
-const Roles = () => {
-  return <h2>Role Management</h2>;
-};
+import RoleManagement from "./RoleManagement";
 
-export default Roles;
+export default function Roles() {
+  return <RoleManagement />;
+}

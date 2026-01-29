@@ -16,22 +16,33 @@ export const updateRole = (roleId, payload) => {
 
 /* ========= USER ↔ ROLE MAPPING ========= */
 
+/**
+ * Get roles assigned to a user
+ */
 export const getUserRoles = (userId) => {
   return api.get(`/api/admin/user-roles/${userId}`);
 };
 
-export const assignUserRole = ({ userId, roleId }) => {
+/**
+ * Assign role to user
+ * Backend expects: { userId, roleCode }
+ */
+export const assignUserRole = ({ userId, roleCode }) => {
   return api.post("/api/admin/user-roles", {
     userId,
-    roleId,
+    roleCode,
   });
 };
 
-export const removeUserRole = ({ userId, roleId }) => {
+/**
+ * Remove role from user
+ * DELETE must send body via `data`
+ */
+export const removeUserRole = ({ userId, roleCode }) => {
   return api.delete("/api/admin/user-roles", {
     data: {
       userId,
-      roleId,
+      roleCode,
     },
   });
 };
