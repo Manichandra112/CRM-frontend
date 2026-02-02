@@ -23,3 +23,9 @@ export const assignManager = (userId, managerId) => {
 export const getManagers = () => {
   return api.get("/api/users/admin/managers");
 };
+
+
+export const createUser = (payload) => {
+  return api.post("/api/users", payload);
+};
+

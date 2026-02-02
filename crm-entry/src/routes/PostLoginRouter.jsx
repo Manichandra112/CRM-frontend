@@ -2,17 +2,27 @@ import { Navigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 
 const PostLoginRouter = () => {
-  const { user, isAuthenticated, isAdmin, loading } = useAuth();
+  const {
+    user,
+    isAuthenticated,
+    isAdmin,
+    pwdResetRequired,
+    loading,
+    authChecking,
+  } = useAuth();
 
-  if (loading) return null;
+  if (loading || authChecking) return null;
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 
-  // ADMIN → Admin control plane
+  if (pwdResetRequired) {
+    return <Navigate to="/reset-password" replace />;
+  }
+
   if (isAdmin) {
-    return <Navigate to="/admin" replace />;
+    return <Navigate to="/admin/users" replace />;
   }
 
   const role =
@@ -22,11 +32,10 @@ const PostLoginRouter = () => {
     return <Navigate to="/access-denied" replace />;
   }
 
-  // ✅ SOCIAL USERS → Social Media CRM
   if (role.startsWith("SOCIAL")) {
-  return <Navigate to="/crm/socialmedia" replace />;
-}
-  // SALES / HR (future)
+    return <Navigate to="/crm/socialmedia" replace />;
+  }
+
   if (role.startsWith("SALES")) {
     return <Navigate to="/crm/sales" replace />;
   }

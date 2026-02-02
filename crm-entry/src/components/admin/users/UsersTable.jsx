@@ -13,6 +13,8 @@ const UsersTable = ({
           <th className="px-4 py-3 text-left">ID</th>
           <th className="px-4 py-3 text-left">Username</th>
           <th className="px-4 py-3 text-left">Email</th>
+          {/* <th className="px-4 py-3 text-left">Domain</th> */}
+
           <th className="px-4 py-3 text-left">Roles</th>
           <th className="px-4 py-3 text-left">Status</th>
           <th className="px-4 py-3 text-right">Admin Control</th>
@@ -48,6 +50,12 @@ const UsersTable = ({
               <td className="px-4 py-3 text-slate-600">
                 {u.email}
               </td>
+
+              {/* <td className="px-4 py-3 text-slate-600">
+  <span className="inline-block bg-blue-50 text-blue-700 text-xs px-2 py-1 rounded">
+    {u.domainName || u.domainCode}
+  </span>
+</td> */}
 
               {/* ROLES */}
               <td className="px-4 py-3">

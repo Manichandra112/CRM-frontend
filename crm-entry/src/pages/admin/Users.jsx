@@ -5,13 +5,14 @@ import {
 } from "react";
 import { useAuth } from "../../auth/AuthContext";
 
+import CreateUser from "../../components/admin/users/CreateUser";
+import UsersTable from "../../components/admin/users/UsersTable";
+import UserDrawer from "../../components/admin/users/UserDrawer";
+
 import { getAdminUsers } from "../../api/admin/users.api";
 import { lockUser, unlockUser } from "../../api/users/users.api";
 import { getDomains } from "../../api/admin/domains.api";
 import { getAdminRoles } from "../../api/admin/roles.api";
-
-import UsersTable from "../../components/admin/users/UsersTable";
-import UserDrawer from "../../components/admin/users/UserDrawer";
 
 import useTableFilters from "../../hooks/useTableFilters";
 
@@ -27,6 +28,7 @@ export default function Users() {
 
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
 
   /* =======================
      FILTER STATE
@@ -145,6 +147,10 @@ export default function Users() {
     permissions?.includes("USER_LOCK") ||
     permissions?.includes("CRM_FULL_ACCESS");
 
+  const canCreate =
+    permissions?.includes("USER_CREATE") ||
+    permissions?.includes("CRM_FULL_ACCESS");
+
   /* =======================
      UI
      ======================= */
@@ -159,13 +165,24 @@ export default function Users() {
   return (
     <div className="space-y-6">
       {/* HEADER */}
-      <div>
-        <h2 className="text-xl font-semibold text-slate-800">
-          Users
-        </h2>
-        <p className="text-sm text-slate-500">
-          Manage users, roles, domains and access
-        </p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-xl font-semibold text-slate-800">
+            Users
+          </h2>
+          <p className="text-sm text-slate-500">
+            Manage users, roles, domains and access
+          </p>
+        </div>
+
+        {canCreate && (
+          <button
+            onClick={() => setCreateOpen(true)}
+            className="bg-blue-600 text-white px-4 py-2 rounded text-sm"
+          >
+            Create User
+          </button>
+        )}
       </div>
 
       {/* ERROR */}
@@ -185,7 +202,6 @@ export default function Users() {
           className="border rounded px-3 py-2 text-sm w-56"
         />
 
-        {/* DOMAINS */}
         <select
           value={domainCode}
           onChange={(e) => setDomainCode(e.target.value)}
@@ -193,16 +209,12 @@ export default function Users() {
         >
           <option value="">All Domains</option>
           {domains.map((d) => (
-            <option
-              key={d.domainId}
-              value={d.domainCode}
-            >
+            <option key={d.domainId} value={d.domainCode}>
               {d.domainName}
             </option>
           ))}
         </select>
 
-        {/* ROLES */}
         <select
           value={roleCode}
           onChange={(e) => setRoleCode(e.target.value)}
@@ -210,16 +222,12 @@ export default function Users() {
         >
           <option value="">All Roles</option>
           {roles.map((r) => (
-            <option
-              key={r.roleCode}
-              value={r.roleCode}
-            >
+            <option key={r.roleCode} value={r.roleCode}>
               {r.roleName}
             </option>
           ))}
         </select>
 
-        {/* STATUS */}
         <select
           value={status}
           onChange={(e) => setStatus(e.target.value)}
@@ -246,7 +254,6 @@ export default function Users() {
       {/* PAGINATION */}
       <div className="flex justify-between items-center text-sm">
         <button
-          type="button"
           disabled={page === 1}
           onClick={() => setPage((p) => p - 1)}
           className="px-3 py-1 border rounded disabled:opacity-50"
@@ -259,7 +266,6 @@ export default function Users() {
         </span>
 
         <button
-          type="button"
           disabled={users.length < pageSize}
           onClick={() => setPage((p) => p + 1)}
           className="px-3 py-1 border rounded disabled:opacity-50"
@@ -275,6 +281,27 @@ export default function Users() {
         onClose={handleCloseDrawer}
         onUserUpdated={loadUsers}
       />
+
+      {/* CREATE USER MODAL */}
+      {createOpen && (
+        <div
+          className="fixed inset-0 bg-black/30 flex items-center justify-center z-50"
+          onClick={() => setCreateOpen(false)}
+        >
+          <div
+            className="bg-white rounded-md p-6 w-[700px] max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+           <CreateUser
+  onSuccess={() => {
+    setCreateOpen(false);
+    loadUsers();
+  }}
+  onClose={() => setCreateOpen(false)}
+/>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
