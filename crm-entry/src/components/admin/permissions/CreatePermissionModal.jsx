@@ -13,7 +13,7 @@ export default function CreatePermissionModal({
   const [error, setError] = useState(null);
 
   const handleCreate = async () => {
-    try {
+    try { 
       setSaving(true);
       setError(null);
 

@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getDomains, createDomain } from "../../api/admin/domains.api";
-import api from "../../api/axios";
+import {
+  getDomains,
+  createDomain,
+  toggleDomainStatus,
+} from "../../api/admin/domains.api";
 
 export default function Domains() {
   const [domains, setDomains] = useState([]);
@@ -17,24 +20,34 @@ export default function Domains() {
     loadDomains();
   }, []);
 
+  /* =======================
+     LOAD DOMAINS
+     ======================= */
   const loadDomains = async () => {
     try {
       setLoading(true);
-      const res = await getDomains();
-      setDomains(res.data);
+      const data = await getDomains();
+      setDomains(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Load domains failed", err);
+      setDomains([]);
     } finally {
       setLoading(false);
     }
   };
 
+  /* =======================
+     CREATE DOMAIN
+     ======================= */
   const handleCreateDomain = async () => {
     if (!domainName.trim() || !domainCode.trim()) {
       alert("Domain name and code are required");
       return;
     }
 
-    setCreating(true);
     try {
+      setCreating(true);
+
       await createDomain({
         domainName: domainName.trim(),
         domainCode: domainCode.trim().toUpperCase(),
@@ -44,45 +57,69 @@ export default function Domains() {
       setDomainCode("");
       loadDomains();
     } catch (err) {
-      console.error(err);
+      console.error("Create domain failed", err);
       alert("Failed to create domain");
     } finally {
       setCreating(false);
     }
   };
 
- const toggleDomain = async (domain) => {
-  const action = domain.active ? "disable" : "enable";
-  if (!window.confirm(`Are you sure you want to ${action} this CRM?`)) return;
+  /* =======================
+     TOGGLE DOMAIN ACTIVE
+     ======================= */
+  const toggleDomain = async (domain) => {
+    const action = domain.active ? "disable" : "enable";
 
-  await api.put(`/api/admin/domains/${domain.domainId}`, {
-    isActive: !domain.active,
-  });
+    if (!window.confirm(`Are you sure you want to ${action} this CRM?`))
+      return;
 
-  loadDomains();
-};
+    try {
+      await toggleDomainStatus(domain.domainId, !domain.active);
+      loadDomains();
+    } catch (err) {
+      console.error("Toggle domain failed", err);
+      alert("Failed to update domain status");
+    }
+  };
 
-
+  /* =======================
+     NAVIGATE TO CRM
+     ======================= */
   const openDomain = (domain) => {
     if (!domain.active) return;
     navigate(`/crm/${domain.domainCode.toLowerCase()}`);
   };
 
+  /* =======================
+     LOADING STATE
+     ======================= */
   if (loading) {
-    return <div className="text-sm text-slate-500">Loading domains…</div>;
+    return (
+      <div className="text-sm text-slate-500">
+        Loading domains…
+      </div>
+    );
   }
 
+  /* =======================
+     MAIN UI
+     ======================= */
   return (
     <div className="space-y-6">
+
       {/* HEADER */}
       <div>
-        <h2 className="text-xl font-semibold text-slate-800">Domains</h2>
+        <h2 className="text-xl font-semibold text-slate-800">
+          Domains
+        </h2>
         <p className="text-sm text-slate-500">
           Manage business CRMs and control their availability
         </p>
       </div>
 
-      {/* ADD DOMAIN */}
+      {/* =======================
+         ADD DOMAIN
+         ======================= */}
       <div className="bg-white border border-slate-200 rounded-md p-4">
         <h3 className="text-sm font-semibold text-slate-700 mb-3">
           Add New Domain
@@ -115,16 +152,21 @@ export default function Domains() {
         </div>
       </div>
 
-      {/* DOMAINS TABLE */}
+      {/* =======================
+         DOMAINS TABLE
+         ======================= */}
       <div className="bg-white border border-slate-200 rounded-md overflow-hidden">
         <table className="w-full text-sm">
+
           <thead className="bg-slate-50 text-slate-600">
             <tr>
               <th className="px-4 py-3 text-left font-medium">Domain</th>
               <th className="px-4 py-3 text-left font-medium">Status</th>
               <th className="px-4 py-3 text-left font-medium">Created</th>
               <th className="px-4 py-3 text-left font-medium">Updated</th>
-              <th className="px-4 py-3 text-right font-medium">Admin Control</th>
+              <th className="px-4 py-3 text-right font-medium">
+                Admin Control
+              </th>
             </tr>
           </thead>
 
@@ -141,6 +183,7 @@ export default function Domains() {
                   }`}
                   onClick={() => openDomain(d)}
                 >
+
                   {/* DOMAIN */}
                   <td className="px-4 py-3">
                     <div
@@ -152,6 +195,7 @@ export default function Domains() {
                     >
                       {d.domainName}
                     </div>
+
                     <div className="text-xs text-slate-500">
                       {d.domainCode}
                     </div>
@@ -178,16 +222,15 @@ export default function Domains() {
                   {/* UPDATED */}
                   <td className="px-4 py-3 text-slate-600">
                     {d.updatedAt ? (
-  new Date(d.updatedAt).toLocaleDateString()
-) : (
-  <span className="text-xs text-slate-400 italic">
-    Never modified
-  </span>
-)}
-
+                      new Date(d.updatedAt).toLocaleDateString()
+                    ) : (
+                      <span className="text-xs text-slate-400 italic">
+                        Never modified
+                      </span>
+                    )}
                   </td>
 
-                  {/* ADMIN ACTION */}
+                  {/* ADMIN CONTROL */}
                   <td
                     className="px-4 py-3 text-right"
                     onClick={(e) => e.stopPropagation()}
@@ -203,11 +246,14 @@ export default function Domains() {
                       {d.active ? "Disable" : "Enable"}
                     </button>
                   </td>
+
                 </tr>
               ))}
           </tbody>
+
         </table>
       </div>
+
     </div>
   );
 }

@@ -1,74 +1,3 @@
-// import { useState } from "react";
-// import { forgotPassword } from "../../api/auth.api";
-
-// export default function ForgotPassword() {
-//   const [email, setEmail] = useState("");
-//   const [loading, setLoading] = useState(false);
-//   const [message, setMessage] = useState(null);
-//   const [error, setError] = useState(null);
-
-//   const submit = async () => {
-//     if (!email) {
-//       setError("Email is required");
-//       return;
-//     }
-
-//     try {
-//       setLoading(true);
-//       setError(null);
-
-//       await forgotPassword({ email });
-
-//       setMessage(
-//         "If the email exists, a password reset link has been sent."
-//       );
-//     } catch {
-//       setError("Something went wrong. Please try again.");
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   return (
-//     <div className="max-w-md mx-auto mt-24 bg-white p-6 rounded shadow">
-//       <h2 className="text-lg font-semibold mb-2">
-//         Forgot Password
-//       </h2>
-
-//       <p className="text-sm text-slate-500 mb-4">
-//         Enter your email address to receive a password reset link.
-//       </p>
-
-//       {error && <div className="mb-3 text-sm text-red-600">{error}</div>}
-
-//       {message ? (
-//         <div className="text-sm text-green-600">{message}</div>
-//       ) : (
-//         <>
-//           <input
-//             type="email"
-//             placeholder="Email address"
-//             className="w-full border p-2 mb-4"
-//             value={email}
-//             onChange={(e) => setEmail(e.target.value)}
-//           />
-
-//           <button
-//             onClick={submit}
-//             disabled={loading}
-//             className="w-full bg-blue-600 text-white py-2 rounded disabled:opacity-50"
-//           >
-//             {loading ? "Sending…" : "Send Reset Link"}
-//           </button>
-//         </>
-//       )}
-//     </div>
-//   );
-// }
-
-
-
-
 import { useState } from "react";
 import { forgotPassword } from "../../api/auth.api";
 
@@ -79,7 +8,7 @@ export default function ForgotPassword() {
   const [error, setError] = useState(null);
 
   const submit = async () => {
-    if (!email) {
+    if (!email.trim()) {
       setError("Email is required");
       return;
     }
@@ -88,8 +17,7 @@ export default function ForgotPassword() {
       setLoading(true);
       setError(null);
 
-      // ✅ pass email as STRING
-      await forgotPassword(email);
+      await forgotPassword(email.trim());
 
       setMessage(
         "If the email exists, a password reset link has been sent."
@@ -103,18 +31,14 @@ export default function ForgotPassword() {
 
   return (
     <div className="max-w-md mx-auto mt-24 bg-white p-6 rounded shadow">
-      <h2 className="text-lg font-semibold mb-2">
-        Forgot Password
-      </h2>
+      <h2 className="text-lg font-semibold mb-2">Forgot Password</h2>
 
       <p className="text-sm text-slate-500 mb-4">
         Enter your email address to receive a password reset link.
       </p>
 
       {error && (
-        <div className="mb-3 text-sm text-red-600">
-          {error}
-        </div>
+        <div className="mb-3 text-sm text-red-600">{error}</div>
       )}
 
       {message ? (
@@ -126,7 +50,10 @@ export default function ForgotPassword() {
             placeholder="Email address"
             className="w-full border p-2 mb-4"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              setError(null);
+            }}
             disabled={loading}
           />
 

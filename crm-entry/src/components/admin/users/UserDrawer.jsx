@@ -39,8 +39,9 @@ export default function UserDrawer({
         setLoading(true);
         setError(null);
 
-        const res = await getAdminUserById(userId);
-        setUser(res.data);
+        const userData = await getAdminUserById(userId);
+setUser(userData);
+
       } catch (err) {
         console.error("User load error:", err);
         setError("Failed to load user details");

@@ -120,19 +120,30 @@ export default function RoleManagement() {
   /* =======================
      LOAD ROLES
      ======================= */
-  const loadRoles = async () => {
-    try {
-      setLoading(true);
-      const res = await getAdminRoles();
-      const list = res.data || [];
-      setRoles(list);
-      setSelectedRole(list[0] || null);
-    } catch (e) {
-      console.error("Failed to load roles", e);
-    } finally {
-      setLoading(false);
-    }
-  };
+const loadRoles = async () => {
+  try {
+    setLoading(true);
+
+    const list = await getAdminRoles();
+
+    setRoles(Array.isArray(list) ? list : []);
+
+    setSelectedRole((prev) =>
+      list.find((r) => r.roleCode === prev?.roleCode) ||
+      list[0] ||
+      null
+    );
+
+  } catch (e) {
+    console.error("Failed to load roles", e);
+    setRoles([]);
+    setSelectedRole(null);
+  } finally {
+    setLoading(false);
+  }
+};
+
+
 
   useEffect(() => {
     loadRoles();

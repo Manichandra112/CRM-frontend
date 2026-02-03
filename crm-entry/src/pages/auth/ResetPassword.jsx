@@ -29,7 +29,7 @@ export default function ResetPassword() {
         newPassword: pwd,
       });
 
-      logout();
+      logout(); // forces fresh login session
     } catch {
       setError("Failed to update password");
     } finally {
@@ -39,32 +39,32 @@ export default function ResetPassword() {
 
   return (
     <div className="max-w-md mx-auto mt-24 bg-white p-6 rounded shadow">
-      <h2 className="text-lg font-semibold mb-4">
-        Set New Password
-      </h2>
+      <h2 className="text-lg font-semibold mb-4">Set New Password</h2>
 
       {error && (
-        <div className="mb-3 text-sm text-red-600">
-          {error}
-        </div>
+        <div className="mb-3 text-sm text-red-600">{error}</div>
       )}
 
       <input
         type="password"
         placeholder="New password"
-        autoComplete="new-password"
         className="w-full border p-2 mb-2"
         value={pwd}
-        onChange={(e) => setPwd(e.target.value)}
+        onChange={(e) => {
+          setPwd(e.target.value);
+          setError(null);
+        }}
       />
 
       <input
         type="password"
         placeholder="Confirm password"
-        autoComplete="new-password"
         className="w-full border p-2 mb-4"
         value={confirm}
-        onChange={(e) => setConfirm(e.target.value)}
+        onChange={(e) => {
+          setConfirm(e.target.value);
+          setError(null);
+        }}
       />
 
       <button

@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import {
+  resetForgotPassword,
+} from "../../api/auth.api";
 import api from "../../api/axios";
 
 export default function ResetForgotPassword() {
@@ -14,7 +17,6 @@ export default function ResetForgotPassword() {
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
 
-  // -------- VALIDATE TOKEN --------
   useEffect(() => {
     if (!token) {
       setValid(false);
@@ -23,13 +25,12 @@ export default function ResetForgotPassword() {
 
     api.get("/api/auth/validate-reset-token", {
       params: { token },
-      skipAuth: true, // 🔑 IMPORTANT
+      skipAuth: true,
     })
       .then(() => setValid(true))
       .catch(() => setValid(false));
   }, [token]);
 
-  // -------- SUBMIT NEW PASSWORD --------
   const submit = async () => {
     if (!password || !confirm) {
       setError("Password is required");
@@ -45,14 +46,10 @@ export default function ResetForgotPassword() {
       setSaving(true);
       setError(null);
 
-      await api.post(
-        "/api/auth/reset-forgot-password",
-        {
-          token,
-          newPassword: password,
-        },
-        { skipAuth: true } // 🔑 IMPORTANT
-      );
+      await resetForgotPassword({
+        token,
+        newPassword: password,
+      });
 
       navigate("/login", { replace: true });
     } catch {
@@ -63,11 +60,7 @@ export default function ResetForgotPassword() {
   };
 
   if (valid === null) {
-    return (
-      <div className="max-w-md mx-auto mt-24 text-center">
-        Validating reset link…
-      </div>
-    );
+    return <div className="max-w-md mx-auto mt-24 text-center">Validating reset link…</div>;
   }
 
   if (!valid) {
@@ -80,20 +73,13 @@ export default function ResetForgotPassword() {
 
   return (
     <div className="max-w-md mx-auto mt-24 bg-white p-6 rounded shadow">
-      <h2 className="text-lg font-semibold mb-4">
-        Reset Password
-      </h2>
+      <h2 className="text-lg font-semibold mb-4">Reset Password</h2>
 
-      {error && (
-        <div className="mb-3 text-sm text-red-600">
-          {error}
-        </div>
-      )}
+      {error && <div className="mb-3 text-sm text-red-600">{error}</div>}
 
       <input
         type="password"
         placeholder="New password"
-        autoComplete="new-password"
         className="w-full border p-2 mb-2"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
@@ -102,7 +88,6 @@ export default function ResetForgotPassword() {
       <input
         type="password"
         placeholder="Confirm password"
-        autoComplete="new-password"
         className="w-full border p-2 mb-4"
         value={confirm}
         onChange={(e) => setConfirm(e.target.value)}

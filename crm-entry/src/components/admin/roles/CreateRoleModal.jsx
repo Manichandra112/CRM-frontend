@@ -17,10 +17,14 @@ export default function CreateRoleModal({ onClose, onCreated }) {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    getAllPermissions().then((res) =>
-      setPermissions(res.data || [])
-    );
-  }, []);
+  const loadPermissions = async () => {
+    const data = await getAllPermissions();
+    setPermissions(Array.isArray(data) ? data : []);
+  };
+
+  loadPermissions();
+}, []);
+
 
   const togglePerm = (code) => {
     setSelectedPerms((prev) => {

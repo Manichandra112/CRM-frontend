@@ -7,4 +7,11 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
+
+  server: {
+    host: "localhost",   
+    port: 5173,          // fixed port
+    strictPort: true,    // fail if port is already in use
+    open: true,          // auto-open browser
+  },
 });

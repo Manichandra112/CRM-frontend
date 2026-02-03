@@ -29,17 +29,22 @@ export default function RolePermissionsEditor({ role }) {
         setError(null);
         setSuccess(false);
 
-        const [allRes, assignedRes] = await Promise.all([
-          getAllPermissions(),
-          getRolePermissionsByRoleCode(role.roleCode),
-        ]);
+        // APIs now return DATA directly (not AxiosResponse)
+        const all = await getAllPermissions();
+        const assigned = await getRolePermissionsByRoleCode(role.roleCode);
 
-        const all = allRes.data || [];
-        const assignedCodes = new Set(
-          assignedRes.data?.permissions || []
-        );
+        const allList = Array.isArray(all) ? all : [];
 
-        setAllPermissions(all);
+        // backend may return:
+        // 1) ["USER_VIEW", "USER_EDIT"]
+        // 2) { permissions: [...] }
+        const assignedList = Array.isArray(assigned)
+          ? assigned
+          : assigned?.permissions || [];
+
+        const assignedCodes = new Set(assignedList);
+
+        setAllPermissions(allList);
         setInitialAssigned(assignedCodes);
         setSelectedPermissions(new Set(assignedCodes));
       } catch (e) {
@@ -83,9 +88,7 @@ export default function RolePermissionsEditor({ role }) {
      CHANGE DETECTION
      ======================= */
   const hasChanges = useMemo(() => {
-    if (initialAssigned.size !== selectedPermissions.size)
-      return true;
-
+    if (initialAssigned.size !== selectedPermissions.size) return true;
     for (const code of initialAssigned) {
       if (!selectedPermissions.has(code)) return true;
     }
@@ -170,89 +173,84 @@ export default function RolePermissionsEditor({ role }) {
         </div>
       )}
 
-      {/* PERMISSIONS (GROUPED) */}
+      {/* PERMISSIONS */}
       <div className="border rounded-md max-h-[420px] overflow-auto divide-y">
-        {Object.entries(permissionsByModule).map(
-          ([module, perms]) => {
-            const allChecked = perms.every((p) =>
-              selectedPermissions.has(p.permissionCode)
-            );
+        {Object.entries(permissionsByModule).map(([module, perms]) => {
+          const allChecked = perms.every((p) =>
+            selectedPermissions.has(p.permissionCode)
+          );
 
-            return (
-              <div key={module}>
-                {/* MODULE HEADER */}
-                <div className="flex items-center justify-between bg-slate-50 px-4 py-2 border-b">
-                  <div className="font-medium text-slate-700">
-                    {module}
-                    <span className="ml-2 text-xs text-slate-400">
-                      ({perms.length})
-                    </span>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedPermissions((prev) => {
-                        const next = new Set(prev);
-                        if (allChecked) {
-                          perms.forEach((p) =>
-                            next.delete(p.permissionCode)
-                          );
-                        } else {
-                          perms.forEach((p) =>
-                            next.add(p.permissionCode)
-                          );
-                        }
-                        return next;
-                      });
-                    }}
-                    className="text-xs text-blue-600 hover:underline"
-                  >
-                    {allChecked ? "Clear all" : "Select all"}
-                  </button>
+          return (
+            <div key={module}>
+              {/* MODULE HEADER */}
+              <div className="flex items-center justify-between bg-slate-50 px-4 py-2 border-b">
+                <div className="font-medium text-slate-700">
+                  {module}
+                  <span className="ml-2 text-xs text-slate-400">
+                    ({perms.length})
+                  </span>
                 </div>
 
-                {/* MODULE PERMISSIONS */}
-                <div className="divide-y">
-                  {perms.map((perm) => {
-                    const checked =
-                      selectedPermissions.has(
-                        perm.permissionCode
-                      );
-
-                    return (
-                      <label
-                        key={perm.permissionCode}
-                        className="flex items-start gap-3 px-4 py-3 text-sm cursor-pointer hover:bg-slate-50"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={checked}
-                          onChange={() =>
-                            togglePermission(
-                              perm.permissionCode
-                            )
-                          }
-                          className="mt-1"
-                        />
-                        <div>
-                          <div className="font-medium text-slate-800">
-                            {perm.permissionCode}
-                          </div>
-                          {perm.description && (
-                            <div className="text-xs text-slate-500">
-                              {perm.description}
-                            </div>
-                          )}
-                        </div>
-                      </label>
-                    );
-                  })}
-                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedPermissions((prev) => {
+                      const next = new Set(prev);
+                      if (allChecked) {
+                        perms.forEach((p) =>
+                          next.delete(p.permissionCode)
+                        );
+                      } else {
+                        perms.forEach((p) =>
+                          next.add(p.permissionCode)
+                        );
+                      }
+                      return next;
+                    });
+                  }}
+                  className="text-xs text-blue-600 hover:underline"
+                >
+                  {allChecked ? "Clear all" : "Select all"}
+                </button>
               </div>
-            );
-          }
-        )}
+
+              {/* MODULE PERMISSIONS */}
+              <div className="divide-y">
+                {perms.map((perm) => {
+                  const checked = selectedPermissions.has(
+                    perm.permissionCode
+                  );
+
+                  return (
+                    <label
+                      key={perm.permissionCode}
+                      className="flex items-start gap-3 px-4 py-3 text-sm cursor-pointer hover:bg-slate-50"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() =>
+                          togglePermission(perm.permissionCode)
+                        }
+                        className="mt-1"
+                      />
+                      <div>
+                        <div className="font-medium text-slate-800">
+                          {perm.permissionCode}
+                        </div>
+                        {perm.description && (
+                          <div className="text-xs text-slate-500">
+                            {perm.description}
+                          </div>
+                        )}
+                      </div>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       {/* ACTIONS */}

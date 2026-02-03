@@ -17,8 +17,9 @@ export default function UserSecurityTab({ userId }) {
         setLoading(true);
         setError(null);
 
-        const res = await getUserSecurity(userId);
-        setSecurity(res.data);
+        const data = await getUserSecurity(userId);
+setSecurity(data);
+
       } catch (err) {
         console.error("Security fetch error:", err);
         setError("Failed to load security details");

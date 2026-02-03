@@ -27,16 +27,24 @@ export default function CreateUser({ onSuccess, onClose }) {
   /* =======================
      LOAD DOMAINS & ROLES
      ======================= */
-  useEffect(() => {
-    Promise.all([getDomains(), getAdminRoles()])
-      .then(([dRes, rRes]) => {
-        setDomains(dRes.data || []);
-        setRoles(rRes.data || []);
-      })
-      .catch(() => {
-        setError("Failed to load domains or roles");
-      });
-  }, []);
+useEffect(() => {
+  const load = async () => {
+    try {
+      const [domainsData, rolesData] = await Promise.all([
+        getDomains(),
+        getAdminRoles(),
+      ]);
+
+      setDomains(Array.isArray(domainsData) ? domainsData : []);
+      setRoles(Array.isArray(rolesData) ? rolesData : []);
+    } catch {
+      setError("Failed to load domains or roles");
+    }
+  };
+
+  load();
+}, []);
+
 
   /* =======================
      DOMAIN CHANGE

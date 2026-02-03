@@ -1,49 +1,31 @@
-// import api from "./axios";
-
-// export const login = (payload) => {
-//   return api.post("/api/auth/login", payload);
-// };
-
-
-// export const changePassword = (payload) => {
-//   return api.post("/api/auth/change-password", payload);
-// };
-
-
-// export const forgotPassword = (payload) => {
-//   return api.post("/api/auth/forgot-password", payload);
-// };
-
-
-// export const resetForgotPassword = (payload) => {
-//   return api.post("/api/auth/reset-forgot-password", payload);
-// };
-
-
 import api from "./axios";
 
-export const login = (payload) => {
-  return api.post("/api/auth/login", payload, {
+export const login = async (payload) => {
+  const res = await api.post("/api/auth/login", payload, {
     skipAuth: true,
   });
+  return res.data;
 };
 
-export const forceChangePassword = (payload) => {
-  return api.post("/api/auth/change-password", payload);
+export const forceChangePassword = async (payload) => {
+  const res = await api.post("/api/auth/change-password", payload);
+  return res.data;
 };
 
-export const forgotPassword = (email) => {
-  return api.post(
+export const forgotPassword = async (email) => {
+  const res = await api.post(
     "/api/auth/forgot-password",
     { email },
     { skipAuth: true }
   );
+  return res.data;
 };
 
-export const resetForgotPassword = (payload) => {
-  return api.post(
+export const resetForgotPassword = async (payload) => {
+  const res = await api.post(
     "/api/auth/reset-forgot-password",
     payload,
     { skipAuth: true }
   );
+  return res.data;
 };

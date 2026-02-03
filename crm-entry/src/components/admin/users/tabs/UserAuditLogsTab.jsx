@@ -9,9 +9,6 @@ export default function UserAuditLogsTab({ userId }) {
   const [page, setPage] = useState(1);
   const pageSize = 10;
 
-  /* =======================
-     LOAD AUDIT LOGS
-     ======================= */
   useEffect(() => {
     if (!userId) return;
 
@@ -20,14 +17,22 @@ export default function UserAuditLogsTab({ userId }) {
         setLoading(true);
         setError(null);
 
-        const res = await getUserAuditLogs(userId, {
+        const result = await getUserAuditLogs(userId, {
           page,
           pageSize,
         });
 
-        // Support both paged and flat responses
-        const data = res.data?.logs || res.data || [];
-        setLogs(data);
+        let logsArray = [];
+
+        if (Array.isArray(result)) {
+          logsArray = result;
+        } else if (Array.isArray(result?.logs)) {
+          logsArray = result.logs;
+        } else if (Array.isArray(result?.items)) {
+          logsArray = result.items;
+        }
+
+        setLogs(logsArray);
       } catch (err) {
         console.error("Audit logs fetch error:", err);
         setError("Failed to load audit logs");
@@ -39,32 +44,26 @@ export default function UserAuditLogsTab({ userId }) {
     loadLogs();
   }, [userId, page]);
 
-  /* =======================
-     UI
-     ======================= */
-  if (loading) {
+  if (loading)
     return (
       <div className="text-sm text-slate-500">
         Loading audit logs…
       </div>
     );
-  }
 
-  if (error) {
+  if (error)
     return (
       <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">
         {error}
       </div>
     );
-  }
 
-  if (!logs.length) {
+  if (!logs.length)
     return (
       <div className="text-sm text-slate-500">
         No audit activity found
       </div>
     );
-  }
 
   return (
     <div className="space-y-4">
@@ -76,6 +75,7 @@ export default function UserAuditLogsTab({ userId }) {
             <th className="text-left px-3 py-2 border-b">Date</th>
           </tr>
         </thead>
+
         <tbody>
           {logs.map((log, idx) => (
             <tr key={idx} className="border-b last:border-b-0">
@@ -95,7 +95,6 @@ export default function UserAuditLogsTab({ userId }) {
         </tbody>
       </table>
 
-      {/* PAGINATION */}
       <div className="flex justify-between items-center text-sm">
         <button
           disabled={page === 1}

@@ -1,31 +1,33 @@
 import api from "../axios";
 
-export const updateUser = (userId, payload) => {
-  return api.put(`/api/users/${userId}`, payload);
+export const updateUser = async (userId, payload) => {
+  const res = await api.put(`/api/users/${userId}`, payload);
+  return res.data;
 };
 
-export const lockUser = (userId, reason = "Locked by admin") => {
-  return api.put(`/api/users/${userId}/lock`, {
-    reason,
-  });
+export const lockUser = async (userId, reason = "Locked by admin") => {
+  const res = await api.put(`/api/users/${userId}/lock`, { reason });
+  return res.data;
 };
 
-export const unlockUser = (userId) => {
-  return api.put(`/api/users/${userId}/unlock`);
+export const unlockUser = async (userId) => {
+  const res = await api.put(`/api/users/${userId}/unlock`);
+  return res.data;
 };
 
-
-export const assignManager = (userId, managerId) => {
-  return api.put(`/api/users/${userId}/manager`, {
+export const assignManager = async (userId, managerId) => {
+  const res = await api.put(`/api/users/${userId}/manager`, {
     managerId,
   });
-};
-export const getManagers = () => {
-  return api.get("/api/users/admin/managers");
+  return res.data;
 };
 
-
-export const createUser = (payload) => {
-  return api.post("/api/users", payload);
+export const getManagers = async () => {
+  const res = await api.get("/api/users/admin/managers");
+  return res.data; // ARRAY
 };
 
+export const createUser = async (payload) => {
+  const res = await api.post("/api/users", payload);
+  return res.data;
+};

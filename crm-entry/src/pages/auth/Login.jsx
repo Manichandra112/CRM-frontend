@@ -13,32 +13,27 @@ const Login = () => {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // ✅ If already logged in, go to home ONCE
   if (isAuthenticated) {
     return <Navigate to="/" replace />;
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (loading) return;
 
     setError(null);
     setLoading(true);
 
     try {
-      const res = await login({
+      const data = await login({
         email: email.trim(),
         password,
       });
 
-      // ✅ Save token
-      setSession(res.data.accessToken);
+      setSession(data.accessToken);
 
-      // ✅ Route ONLY on success
       navigate("/", { replace: true });
-    } catch (err) {
-      // ❌ Wrong credentials → stay here
+    } catch {
       setError("Invalid email or password");
     } finally {
       setLoading(false);
@@ -52,13 +47,10 @@ const Login = () => {
       </h2>
 
       {error && (
-        <div className="mb-3 text-sm text-red-600">
-          {error}
-        </div>
+        <div className="mb-3 text-sm text-red-600">{error}</div>
       )}
 
       <form onSubmit={handleSubmit}>
-        {/* Email */}
         <div className="mb-3">
           <input
             type="email"
@@ -71,7 +63,6 @@ const Login = () => {
           />
         </div>
 
-        {/* Password */}
         <div className="mb-4 relative">
           <input
             type={showPwd ? "text" : "password"}

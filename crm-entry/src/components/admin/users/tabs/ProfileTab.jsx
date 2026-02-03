@@ -60,18 +60,19 @@ export default function ProfileTab({ user, onUpdated }) {
   /* =======================
      LOAD MANAGERS (ONCE)
      ======================= */
-  useEffect(() => {
-    const loadManagers = async () => {
-      try {
-        const res = await getManagers();
-        setManagers(res.data || []);
-      } catch (err) {
-        console.error("Failed to load managers", err);
-      }
-    };
+useEffect(() => {
+  const loadManagers = async () => {
+    try {
+      const data = await getManagers();
+      setManagers(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Failed to load managers", err);
+    }
+  };
 
-    loadManagers();
-  }, []);
+  loadManagers();
+}, []);
+
 
   /* =======================
      FILTER MANAGERS (ZOHO STYLE)
