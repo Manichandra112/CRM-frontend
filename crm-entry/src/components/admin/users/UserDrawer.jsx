@@ -31,26 +31,31 @@ export default function UserDrawer({
   /* =======================
      FETCH USER DETAILS
      ======================= */
+  const loadUser = async () => {
+    if (!userId) return;
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const userData = await getAdminUserById(userId);
+
+      // DEBUG (remove later)
+      console.log("Fetched userData:", userData);
+
+      setUser(userData);
+    } catch (err) {
+      console.error("User load error:", err);
+      setError("Failed to load user details");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    if (!open || !userId) return;
-
-    const loadUser = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        const userData = await getAdminUserById(userId);
-setUser(userData);
-
-      } catch (err) {
-        console.error("User load error:", err);
-        setError("Failed to load user details");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadUser();
+    if (open && userId) {
+      loadUser();
+    }
   }, [open, userId]);
 
   /* =======================
@@ -59,6 +64,16 @@ setUser(userData);
   useEffect(() => {
     if (open) setActiveTab("profile");
   }, [userId, open]);
+
+  /* =======================
+     CLEAR USER WHEN CLOSED
+     ======================= */
+  useEffect(() => {
+    if (!open) {
+      setUser(null);
+      setError(null);
+    }
+  }, [open]);
 
   if (!open) return null;
 
@@ -72,13 +87,17 @@ setUser(userData);
 
       {/* DRAWER */}
       <div className="ml-auto w-[480px] bg-white h-full shadow-xl relative z-50 flex flex-col">
+
         {/* HEADER */}
         <div className="border-b px-4 py-3 flex justify-between items-center">
           <div>
             <h3 className="text-sm font-semibold text-slate-800">
               {user?.name || "User"}
             </h3>
-            <p className="text-xs text-slate-500">{user?.email}</p>
+
+            <p className="text-xs text-slate-500">
+              {user?.email || ""}
+            </p>
           </div>
 
           <button
@@ -108,24 +127,29 @@ setUser(userData);
 
         {/* CONTENT */}
         <div className="flex-1 overflow-y-auto p-4">
+
+          {/* LOADING */}
           {loading && (
             <div className="text-sm text-slate-500">
               Loading user…
             </div>
           )}
 
+          {/* ERROR */}
           {error && (
             <div className="text-sm text-red-600">
               {error}
             </div>
           )}
 
+          {/* USER DATA */}
           {!loading && user && (
             <>
               {activeTab === "profile" && (
                 <ProfileTab
                   user={user}
-                  onUpdated={() => {
+                  onUpdated={async () => {
+                    await loadUser();
                     onUserUpdated?.();
                   }}
                 />
@@ -134,7 +158,8 @@ setUser(userData);
               {activeTab === "roles" && (
                 <RolesTab
                   userId={userId}
-                  onUpdated={() => {
+                  onUpdated={async () => {
+                    await loadUser();
                     onUserUpdated?.();
                   }}
                 />
@@ -149,6 +174,7 @@ setUser(userData);
               )}
             </>
           )}
+
         </div>
       </div>
     </div>

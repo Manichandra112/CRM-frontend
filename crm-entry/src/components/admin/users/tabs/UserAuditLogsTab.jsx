@@ -22,17 +22,18 @@ export default function UserAuditLogsTab({ userId }) {
           pageSize,
         });
 
-        let logsArray = [];
+        // Support multiple response shapes
+        const logsArray = Array.isArray(result)
+          ? result
+          : result?.logs || result?.items || [];
 
-        if (Array.isArray(result)) {
-          logsArray = result;
-        } else if (Array.isArray(result?.logs)) {
-          logsArray = result.logs;
-        } else if (Array.isArray(result?.items)) {
-          logsArray = result.items;
-        }
+        setLogs(
+          logsArray.map((log) => ({
+            ...log,
+            performedBy: log.actorName
+          }))
+        );
 
-        setLogs(logsArray);
       } catch (err) {
         console.error("Audit logs fetch error:", err);
         setError("Failed to load audit logs");
@@ -82,9 +83,11 @@ export default function UserAuditLogsTab({ userId }) {
               <td className="px-3 py-2 text-slate-700">
                 {log.action}
               </td>
+
               <td className="px-3 py-2 text-slate-600">
                 {log.performedBy || "System"}
               </td>
+
               <td className="px-3 py-2 text-slate-600">
                 {log.createdAt
                   ? new Date(log.createdAt).toLocaleString()

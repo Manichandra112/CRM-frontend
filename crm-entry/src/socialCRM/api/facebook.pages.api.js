@@ -31,4 +31,3 @@ export const subscribePage = async (pageId) => {
 export const unsubscribePage = async (pageId) => {
   await api.post(`/facebook/pages/${pageId}/unsubscribe`);
 };
-
