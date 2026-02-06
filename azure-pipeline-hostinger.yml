@@ -1,72 +1,39 @@
-trigger: none
-pr: none
+trigger:
+- main
+
+pool:
+  vmImage: ubuntu-latest
+
 variables:
-  - name: dockerRegistryServiceConnection
-    value: 'jetfyx-acr-connection'
-  - name: imageRepository
-    value: 'jetwebapp-prod-api'
-  - name: containerRegistry
-    value: 'jetfyx.azurecr.io'
-  - name: dockerfilePath
-    value: '/CRM_Backend/Dockerfile'
-  - name: tag
-    value: '$(Build.BuildId)'
-  - name: azureSubscription
-    value: 'jetfyx-azure-service-connection-prod'
-  - name: appName
-    value: 'jetwebapp-api-prod'
-  - name: rg
-    value: 'rg-jetfyx-prod'
-stages:
-- stage: Build
-  displayName: Build and Push Docker Image
-  jobs:
-  - job: Build
-    pool:
-      vmImage: 'ubuntu-latest'
- 
-    - task: Docker@2
-      displayName: Build and Push Image
-      inputs:
-        command: buildAndPush
-        repository: $(imageRepository)
-        dockerfile: $(dockerfilePath)
-        containerRegistry: $(dockerRegistryServiceConnection)
-        tags: |
-          $(tag)
-          latest
+  registry: registry.nafabarter.com
+  imageName: crm-backend
+  tag: $(Build.BuildId)
 
-- stage: Deploy
-  displayName: Deploy to Hostinger
-  dependsOn: Build
-  jobs:
-  - job: Deploy
-    pool:
-      vmImage: 'ubuntu-latest'
-    steps:
-    - task: SSH@0
-      displayName: Deploy Backend Container
-      inputs:
-        sshEndpoint: 'hostinger-vps'
-        runOptions: inline
-        inline: |
-          set -e
-          echo "Deploying image: $(containerRegistry)/$(imageRepository):$(tag)"
+steps:
 
-          # Ensure network exists
-          docker network inspect crmnet >/dev/null 2>&1 || docker network create crmnet
+# Build image
+- task: Docker@2
+  displayName: Build image
+  inputs:
+    command: build
+    Dockerfile: '**/Dockerfile'
+    repository: $(registry)/$(imageName)
+    tags: |
+      latest
+      $(tag)
 
-          # Stop and remove existing backend
-          docker rm -f $(appName) || true
+# Push image
+- task: Docker@2
+  displayName: Push image
+  inputs:
+    command: push
+    repository: $(registry)/$(imageName)
+    containerRegistry: nafa-registry
+    tags: |
+      latest
+      $(tag)
 
-          # Pull new image
-          docker pull $(containerRegistry)/$(imageRepository):$(tag)
-
-          # Run backend container
-          docker run -d \
-            --name $(appName) \
-            --network crmnet \
-            -p 9070:5000 \
-            --restart always \
-            -e ASPNETCORE_ENVIRONMENT=Production \
-            $(containerRegistry)/$(imageRepository):$(tag)
+# Trigger Portainer webhook
+- script: |
+    curl -X POST https://portainer.yourdomain.com/api/webhooks/XXXX
+  displayName: Trigger Portainer deployment
