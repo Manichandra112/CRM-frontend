@@ -23,6 +23,6 @@ steps:
       $(tag)
 
 - script: |
-    curl -X POST https://89.116.20.215:9443/api/stacks/webhooks/85d4b758-b6d8-44ce-8bd7-7c2384f37f01
+    curl -X POST -k https://89.116.20.215:9443/api/stacks/webhooks/85d4b758-b6d8-44ce-8bd7-7c2384f37f01
   displayName: 'Trigger Portainer webhook deployment'
   condition: succeeded()
