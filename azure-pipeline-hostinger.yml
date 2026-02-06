@@ -2,37 +2,31 @@ trigger:
 - main
 
 pool:
-  vmImage: ubuntu-latest
+  vmImage: 'ubuntu-latest'
 
 variables:
-  imageName: crm-backend
-  tag: $(Build.BuildId)
+  imageName: 'crm-backend'
+  registry: 'registry.nafabarter.com'
+  fullImageName: '$(registry)/$(imageName)'
+  tag: '$(Build.BuildId)'
 
 steps:
 
-# Build image
 - task: Docker@2
-  displayName: Build image
+  displayName: 'Build and push $(imageName)'
   inputs:
-    command: build
+    command: buildAndPush
+    containerRegistry: 'nafa-registry'
+    repository: '$(imageName)'
     Dockerfile: '**/Dockerfile'
-    repository: $(imageName)
     tags: |
       latest
       $(tag)
 
-# Push image
-- task: Docker@2
-  displayName: Push image
-  inputs:
-    command: push
-    repository: $(imageName)
-    containerRegistry: nafa-registry
-    tags: |
-      latest
-      $(tag)
-
-# Trigger Portainer
+# Optional – uncomment if you want to trigger a Portainer / webhook deployment after successful push
 # - script: |
-#     curl -X POST https://portainer.yourdomain.com/api/webhooks/XXXX
-#   displayName: Deploy via webhook
+#     curl -X POST https://portainer.yourdomain.com/api/webhooks/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx \
+#       -H "Content-Type: application/json" \
+#       -d '{}'
+#   displayName: 'Trigger Portainer webhook deployment'
+#   condition: succeeded()
