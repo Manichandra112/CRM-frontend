@@ -23,10 +23,7 @@ steps:
       latest
       $(tag)
 
-# Optional – uncomment if you want to trigger a Portainer / webhook deployment after successful push
-# - script: |
-#     curl -X POST https://portainer.yourdomain.com/api/webhooks/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx \
-#       -H "Content-Type: application/json" \
-#       -d '{}'
-#   displayName: 'Trigger Portainer webhook deployment'
-#   condition: succeeded()
+- script: |
+    curl -X POST https://89.116.20.215:9443/api/stacks/webhooks/85d4b758-b6d8-44ce-8bd7-7c2384f37f01
+  displayName: 'Trigger Portainer webhook deployment'
+  condition: succeeded()
