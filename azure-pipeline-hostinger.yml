@@ -34,6 +34,6 @@ steps:
       $(tag)
 
 # Trigger Portainer webhook
-- script: |
-    curl -X POST https://portainer.yourdomain.com/api/webhooks/XXXX
-  displayName: Trigger Portainer deployment
+# - script: |
+#     curl -X POST https://portainer.yourdomain.com/api/webhooks/XXXX
+#   displayName: Trigger Portainer deployment
