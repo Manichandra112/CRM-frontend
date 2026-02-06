@@ -1,10 +1,10 @@
-trigger: none
+trigger:
+- main
 
 pool:
   vmImage: ubuntu-latest
 
 variables:
-  registry: registry.nafabarter.com
   imageName: crm-backend
   tag: $(Build.BuildId)
 
@@ -16,7 +16,7 @@ steps:
   inputs:
     command: build
     Dockerfile: '**/Dockerfile'
-    repository: $(registry)/$(imageName)
+    repository: $(imageName)
     tags: |
       latest
       $(tag)
@@ -26,13 +26,13 @@ steps:
   displayName: Push image
   inputs:
     command: push
-    repository: $(registry)/$(imageName)
+    repository: $(imageName)
     containerRegistry: nafa-registry
     tags: |
       latest
       $(tag)
 
-# Trigger Portainer webhook
+# Trigger Portainer
 # - script: |
 #     curl -X POST https://portainer.yourdomain.com/api/webhooks/XXXX
-#   displayName: Trigger Portainer deployment
+#   displayName: Deploy via webhook
