@@ -27,4 +27,6 @@
     <Folder Include="Controller\Users\" />
   </ItemGroup>
 
+  <ProjectExtensions><VisualStudio><UserProperties appsettings_1json__JsonSchema="35=-0921" /></VisualStudio></ProjectExtensions>
+
 </Project>

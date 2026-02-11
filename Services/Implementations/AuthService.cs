@@ -489,8 +489,10 @@ public class AuthService : IAuthService
             CreatedAt = DateTime.UtcNow
         });
 
+      
         await _userSecurityRepository.ClearForceResetAsync(userId);
         await _refreshTokenRepository.RevokeAllAsync(userId);
+
     }
 
     // --------------------------------------------------
@@ -549,8 +551,11 @@ public class AuthService : IAuthService
             CreatedAt = DateTime.UtcNow
         });
 
+     
+
         await _userSecurityRepository.ClearPasswordResetAsync(security.UserId);
         await _refreshTokenRepository.RevokeAllAsync(security.UserId);
+
     }
 
     // --------------------------------------------------

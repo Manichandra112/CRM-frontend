@@ -87,9 +87,12 @@ public class UserSecurityRepository : IUserSecurityRepository
 
         security.ForcePasswordReset = false;
         security.PasswordLastChangedAt = DateTime.UtcNow;
+        security.FailedLoginCount = 0;
+        security.LockedUntil = null;
 
         await _context.SaveChangesAsync();
     }
+
 
     // ---------------- FORGOT / RESET PASSWORD ----------------
 
@@ -127,10 +130,16 @@ public class UserSecurityRepository : IUserSecurityRepository
         security.PasswordResetTokenHash = null;
         security.PasswordResetExpiresAt = null;
         security.ForcePasswordReset = false;
+
         security.PasswordLastChangedAt = DateTime.UtcNow;
+
+        // 🔐 Unlock completely
+        security.FailedLoginCount = 0;
+        security.LockedUntil = null;
 
         await _context.SaveChangesAsync();
     }
+
 
     public async Task UpdateLastLoginAsync(
     long userId,

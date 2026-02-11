@@ -1,4 +1,5 @@
 ﻿using CRM_Backend.Data;
+using CRM_Backend.Data.Seed;
 using CRM_Backend.Repositories.Implementations;
 using CRM_Backend.Repositories.Interfaces;
 using CRM_Backend.Security.Authorization;
@@ -129,58 +130,138 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     };
 });
 
-// --------------------------------------------------
-// Authorization (permission-based)
-// --------------------------------------------------
+
+
+
+//builder.Services.AddAuthorization(options =>
+//{
+//    // ==================================================
+//    // SECURITY / ACCOUNT STATE (NO SUPER-ADMIN BYPASS)
+//    // ==================================================
+
+//    options.AddPolicy("ACCOUNT_ACTIVE", policy =>
+//        policy.RequireClaim("account_status", "ACTIVE")
+//    );
+
+//    options.AddPolicy("PASSWORD_RESET_COMPLETED", policy =>
+//        policy.Requirements.Add(new ForcePasswordResetRequirement())
+//    );
+
+//    // ==================================================
+//    // USER MANAGEMENT
+//    // ==================================================
+
+//    options.AddPolicy("USER_VIEW",
+//        p => p.Requirements.Add(new PermissionRequirement("USER_VIEW")));
+
+//    options.AddPolicy("USER_CREATE",
+//        p => p.Requirements.Add(new PermissionRequirement("USER_CREATE")));
+
+//    options.AddPolicy("USER_UPDATE",
+//        p => p.Requirements.Add(new PermissionRequirement("USER_UPDATE")));
+
+//    options.AddPolicy("USER_LOCK",
+//        p => p.Requirements.Add(new PermissionRequirement("USER_LOCK")));
+
+//    options.AddPolicy("USER_UNLOCK",
+//        p => p.Requirements.Add(new PermissionRequirement("USER_UNLOCK")));
+
+//    options.AddPolicy("USER_ASSIGN_MANAGER",
+//        p => p.Requirements.Add(new PermissionRequirement("USER_ASSIGN_MANAGER")));
+
+//    options.AddPolicy("USER_RESET_PASSWORD",
+//        p => p.Requirements.Add(new PermissionRequirement("USER_RESET_PASSWORD")));
+
+//    options.AddPolicy("USER_VIEW_TEAM",
+//        p => p.Requirements.Add(new PermissionRequirement("USER_VIEW_TEAM")));
+
+//    // ==================================================
+//    // EMPLOYEE / HR
+//    // ==================================================
+
+//    options.AddPolicy("EMP_VIEW",
+//        p => p.Requirements.Add(new PermissionRequirement("EMP_VIEW")));
+
+//    options.AddPolicy("HR_EMP_VIEW",
+//        p => p.Requirements.Add(new PermissionRequirement("HR_EMP_VIEW")));
+
+//    // ==================================================
+//    // SALES
+//    // ==================================================
+
+//    options.AddPolicy("SALES_LEAD_VIEW",
+//        p => p.Requirements.Add(new PermissionRequirement("SALES_LEAD_VIEW")));
+
+//    // ==================================================
+//    // SOCIAL MEDIA
+//    // ==================================================
+
+//    options.AddPolicy("SOCIAL_POST_CREATE",
+//        p => p.Requirements.Add(new PermissionRequirement("SOCIAL_POST_CREATE")));
+
+//    // ==================================================
+//    // DOMAIN MANAGEMENT
+//    // ==================================================
+
+//    options.AddPolicy("DOMAIN_VIEW",
+//        p => p.Requirements.Add(new PermissionRequirement("DOMAIN_VIEW")));
+
+//    options.AddPolicy("DOMAIN_CREATE",
+//        p => p.Requirements.Add(new PermissionRequirement("DOMAIN_CREATE")));
+
+//    options.AddPolicy("DOMAIN_UPDATE",
+//        p => p.Requirements.Add(new PermissionRequirement("DOMAIN_UPDATE")));
+
+//    // ==================================================
+//    // ROLE & PERMISSION MANAGEMENT
+//    // ==================================================
+
+//    options.AddPolicy("ROLE_VIEW",
+//        p => p.Requirements.Add(new PermissionRequirement("ROLE_VIEW")));
+
+//    options.AddPolicy("ROLE_CREATE",
+//        p => p.Requirements.Add(new PermissionRequirement("ROLE_CREATE")));
+
+//    options.AddPolicy("ROLE_UPDATE",
+//        p => p.Requirements.Add(new PermissionRequirement("ROLE_UPDATE")));
+
+//    options.AddPolicy("PERMISSION_VIEW",
+//        p => p.Requirements.Add(new PermissionRequirement("PERMISSION_VIEW")));
+
+//    options.AddPolicy("PERMISSION_ASSIGN",
+//        p => p.Requirements.Add(new PermissionRequirement("PERMISSION_ASSIGN")));
+
+//    // ==================================================
+//    // AUDIT / SECURITY
+//    // ==================================================
+
+//    options.AddPolicy("AUDIT_LOG_VIEW",
+//        p => p.Requirements.Add(new PermissionRequirement("AUDIT_LOG_VIEW")));
+
+//    options.AddPolicy("SECURITY_VIEW",
+//        p => p.Requirements.Add(new PermissionRequirement("SECURITY_VIEW")));
+//});
+
+
 builder.Services.AddAuthorization(options =>
 {
-    
-    PermissionPolicies.Register(options);
+    // -------------------------------
+    // ACCOUNT STATE POLICIES (STATIC)
+    // -------------------------------
 
-   
-    options.AddPolicy("PASSWORD_RESET_COMPLETED", policy =>
-        policy.RequireClaim("pwd_reset_completed", "true")
-    );
+    options.AddPolicy("ACCOUNT_ACTIVE",
+        policy => policy.RequireClaim("account_status", "ACTIVE"));
 
-    options.AddPolicy("ACCOUNT_ACTIVE", policy =>
-        policy.RequireClaim("account_status", "ACTIVE")
-    );
+    options.AddPolicy("PASSWORD_RESET_COMPLETED",
+        policy => policy.Requirements.Add(new ForcePasswordResetRequirement()));
 
-   
-    options.AddPolicy("USER_VIEW", policy =>
-        policy.RequireClaim("perm", "USER_VIEW")
-    );
+    // -------------------------------
+    // DYNAMIC PERMISSION POLICY
+    // -------------------------------
 
-    options.AddPolicy("USER_CREATE", policy =>
-        policy.RequireClaim("perm", "USER_CREATE")
-    );
-
-    options.AddPolicy("USER_UPDATE", policy =>
-        policy.RequireClaim("perm", "USER_UPDATE")
-    );
-
-    options.AddPolicy("USER_LOCK", policy =>
-        policy.RequireClaim("perm", "USER_LOCK")
-    );
-
-    options.AddPolicy("USER_UNLOCK", policy =>
-        policy.RequireClaim("perm", "USER_UNLOCK")
-    );
-
-    options.AddPolicy("USER_ASSIGN_MANAGER", policy =>
-        policy.RequireClaim("perm", "USER_ASSIGN_MANAGER")
-    );
-
-    options.AddPolicy("USER_RESET_PASSWORD", policy =>
-        policy.RequireClaim("perm", "USER_RESET_PASSWORD")
-    );
-
-   
-    options.AddPolicy("CRM_FULL_ACCESS", policy =>
-        policy.RequireClaim("perm", "CRM_FULL_ACCESS")
-    );
+    options.AddPolicy("PERMISSION",
+        policy => policy.Requirements.Add(new PermissionRequirement()));
 });
-
 
 
 
@@ -217,8 +298,12 @@ builder.Services.AddScoped<IAdminUserSecurityService, AdminUserSecurityService>(
 builder.Services.AddScoped<IAdminUserAuditLogService, AdminUserAuditLogService>();
 builder.Services.AddScoped<IPermissionService, PermissionService>();
 builder.Services.AddScoped<IAccessService, AccessService>();
+builder.Services.AddScoped<IBootstrapSeeder, BootstrapSeeder>();
+builder.Services.AddScoped<IAuthorizationHandler, PermissionHandler>();
 
 
+builder.Services.AddSingleton<IAuthorizationPolicyProvider,
+    PermissionPolicyProvider>();
 
 
 
@@ -237,29 +322,38 @@ builder.Services.AddScoped<IDomainRepository, DomainRepository>();
 // --------------------------------------------------
 var app = builder.Build();
 
+//---------------------------------------------------
 using (var scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<CrmAuthDbContext>();
-    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-
-    var retries = 10;
-    while (retries > 0)
-    {
-        try
-        {
-            logger.LogInformation("Applying database migrations...");
-            db.Database.Migrate();
-            logger.LogInformation("Database migrations applied successfully");
-            break;
-        }
-        catch (Exception ex)
-        {
-            retries--;
-            logger.LogWarning(ex, "Database not ready. Retrying...");
-            Thread.Sleep(3000);
-        }
-    }
+    var seeder = scope.ServiceProvider.GetRequiredService<IBootstrapSeeder>();
+    await seeder.SeedAsync();
 }
+//---------------------------------------------------
+
+
+//using (var scope = app.Services.CreateScope())
+//{
+//    var db = scope.ServiceProvider.GetRequiredService<CrmAuthDbContext>();
+//    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
+//    var retries = 10;
+//    while (retries > 0)
+//    {
+//        try
+//        {
+//            logger.LogInformation("Applying database migrations...");
+//            db.Database.Migrate();
+//            logger.LogInformation("Database migrations applied successfully");
+//            break;
+//        }
+//        catch (Exception ex)
+//        {
+//            retries--;
+//            logger.LogWarning(ex, "Database not ready. Retrying...");
+//            Thread.Sleep(3000);
+//        }
+//    }
+//}
 // --------------------------------------------------
 // Middleware pipeline
 // --------------------------------------------------

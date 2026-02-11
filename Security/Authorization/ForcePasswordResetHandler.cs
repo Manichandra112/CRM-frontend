@@ -1,7 +1,8 @@
 ﻿namespace CRM_Backend.Security.Authorization
 {
-    using Microsoft.AspNetCore.Authorization;
     using CRM_Backend.Repositories.Interfaces;
+    using Microsoft.AspNetCore.Authorization;
+    using System.Security.Claims;
 
     public class ForcePasswordResetHandler
         : AuthorizationHandler<ForcePasswordResetRequirement>
@@ -17,7 +18,7 @@
             AuthorizationHandlerContext context,
             ForcePasswordResetRequirement requirement)
         {
-            var userIdClaim = context.User.FindFirst("sub");
+            var userIdClaim = context.User.FindFirst(ClaimTypes.NameIdentifier);
             if (userIdClaim == null)
                 return;
 
@@ -31,5 +32,7 @@
                 context.Succeed(requirement);
         }
     }
+
+
 
 }
