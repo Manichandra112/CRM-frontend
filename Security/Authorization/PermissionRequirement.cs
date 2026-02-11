@@ -1,16 +1,14 @@
-﻿namespace CRM_Backend.Security.Authorization
-{
-    using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 
+namespace CRM_Backend.Security.Authorization
+{
     public class PermissionRequirement : IAuthorizationRequirement
     {
-        public string? Permission { get; }
+        public string Permission { get; }
 
-        public PermissionRequirement(string? permission = null)
+        public PermissionRequirement(string permission)
         {
             Permission = permission;
         }
     }
-
-
 }

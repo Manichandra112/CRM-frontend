@@ -50,4 +50,9 @@ public class RolePermissionRepository : IRolePermissionRepository
             .Select(rp => rp.PermissionId)
             .ToListAsync();
     }
+
+
+    
+    
+
 }

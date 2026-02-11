@@ -6,14 +6,18 @@ namespace CRM_Backend.Security.Authorization
     public class PermissionPolicyProvider : DefaultAuthorizationPolicyProvider
     {
         public PermissionPolicyProvider(IOptions<AuthorizationOptions> options)
-            : base(options) { }
+            : base(options)
+        {
+        }
 
         public override Task<AuthorizationPolicy?> GetPolicyAsync(string policyName)
         {
-            if (policyName == "PERMISSION")
+            if (policyName.StartsWith("PERMISSION:", StringComparison.OrdinalIgnoreCase))
             {
+                var permission = policyName.Substring("PERMISSION:".Length);
+
                 var policy = new AuthorizationPolicyBuilder()
-                    .AddRequirements(new PermissionRequirement())
+                    .AddRequirements(new PermissionRequirement(permission))
                     .Build();
 
                 return Task.FromResult<AuthorizationPolicy?>(policy);
@@ -22,5 +26,4 @@ namespace CRM_Backend.Security.Authorization
             return base.GetPolicyAsync(policyName);
         }
     }
-
 }

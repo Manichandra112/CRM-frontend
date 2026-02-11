@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
 namespace CRM_Backend.Controllers;
+using CRM_Backend.Security.Extensions;
+
 
 [ApiController]
 [Route("api/users")]
@@ -28,7 +30,7 @@ public class UsersController : ControllerBase
     [HasPermission("USER_CREATE")]
     public async Task<IActionResult> CreateUser(CreateUserDto dto)
     {
-        var actorId = long.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var actorId = User.GetUserId();
         var userId = await _users.CreateUserAsync(dto, actorId);
         return Ok(new { userId });
     }
@@ -38,7 +40,7 @@ public class UsersController : ControllerBase
     [HasPermission("USER_UPDATE")]
     public async Task<IActionResult> UpdateUser(long userId, UpdateUserDto dto)
     {
-        var actorId = long.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var actorId = User.GetUserId();
         await _users.UpdateUserAsync(userId, dto, actorId);
         return Ok();
     }
@@ -96,16 +98,17 @@ public class UsersController : ControllerBase
     [HasPermission("USER_VIEW_TEAM")]
     public async Task<IActionResult> GetMyTeam()
     {
-        var managerId = long.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var managerId = User.GetUserId();
         return Ok(await _users.GetTeamByManagerAsync(managerId));
     }
+
 
     // LOCK USER
     [HttpPut("{userId:long}/lock")]
     [HasPermission("USER_LOCK")]
     public async Task<IActionResult> LockUser(long userId, LockUserDto dto)
     {
-        var actorId = long.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var actorId = User.GetUserId();
         await _users.LockUserAsync(userId, dto.Reason, actorId);
         return Ok();
     }
@@ -115,7 +118,7 @@ public class UsersController : ControllerBase
     [HasPermission("USER_UNLOCK")]
     public async Task<IActionResult> UnlockUser(long userId)
     {
-        var actorId = long.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var actorId = User.GetUserId();
         await _users.UnlockUserAsync(userId, actorId);
         return Ok();
     }

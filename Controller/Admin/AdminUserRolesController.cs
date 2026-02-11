@@ -6,6 +6,7 @@ using CRM_Backend.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using CRM_Backend.Security.Extensions;
 
 namespace CRM_Backend.Controller.Admin;
 
@@ -29,9 +30,8 @@ public class AdminUserRolesController : ControllerBase
     [HasPermission("USER_ASSIGN_MANAGER")]
     public async Task<IActionResult> AssignRole(AssignUserRoleDto dto)
     {
-        var adminId = long.Parse(
-            User.FindFirstValue(ClaimTypes.NameIdentifier)!
-        );
+
+        var adminId = User.GetUserId();
 
         await _users.AssignRoleToUserAsync(dto.UserId, dto.RoleCode, adminId);
         return Ok();

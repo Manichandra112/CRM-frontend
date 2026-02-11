@@ -4,4 +4,6 @@
     Task RemovePermissionAsync(long roleId, long permissionId);
 
     Task<IEnumerable<long>> GetPermissionIdsByRoleAsync(long roleId);
+
+
 }

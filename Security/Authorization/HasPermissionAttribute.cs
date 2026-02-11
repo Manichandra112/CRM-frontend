@@ -6,11 +6,7 @@ namespace CRM_Backend.Security.Authorization
     {
         public HasPermissionAttribute(string permission)
         {
-            Policy = "PERMISSION";
-            Permission = permission;
+            Policy = $"PERMISSION:{permission}";
         }
-
-        public string Permission { get; }
     }
-
 }

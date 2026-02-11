@@ -4,6 +4,7 @@ using CRM_Backend.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using CRM_Backend.Security.Extensions;
 
 namespace CRM_Backend.Controller.Admin;
 
@@ -27,9 +28,7 @@ public class AdminRolePermissionsController : ControllerBase
     [HasPermission("PERMISSION_ASSIGN")]
     public async Task<IActionResult> Assign(AssignPermissionDto dto)
     {
-        var adminId = long.Parse(
-            User.FindFirstValue(ClaimTypes.NameIdentifier)!
-        );
+        var adminId = User.GetUserId();
 
         await _service.AssignPermissionAsync(
             dto.RoleCode,
@@ -39,6 +38,7 @@ public class AdminRolePermissionsController : ControllerBase
 
         return Ok();
     }
+
 
     // REMOVE PERMISSION FROM ROLE
     [HttpDelete]

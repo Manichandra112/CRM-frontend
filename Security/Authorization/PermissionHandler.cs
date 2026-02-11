@@ -1,24 +1,28 @@
-﻿namespace CRM_Backend.Security.Authorization
-{
-    using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
-    public class PermissionHandler
-        : AuthorizationHandler<PermissionRequirement>
+namespace CRM_Backend.Security.Authorization
+{
+    public class PermissionHandler : AuthorizationHandler<PermissionRequirement>
     {
         protected override Task HandleRequirementAsync(
             AuthorizationHandlerContext context,
             PermissionRequirement requirement)
         {
-            // 🔥 Super admin override
-            if (context.User.HasClaim("perm", "CRM_FULL_ACCESS"))
+            var permissions = context.User
+                .FindAll("perm")
+                .Select(c => c.Value)
+                .ToList();
+
+            // SUPER ADMIN
+            if (permissions.Contains("CRM_FULL_ACCESS"))
             {
                 context.Succeed(requirement);
                 return Task.CompletedTask;
             }
 
-            // 🔑 Permission required
-            if (requirement.Permission != null &&
-                context.User.HasClaim("perm", requirement.Permission))
+            // NORMAL CHECK
+            if (permissions.Contains(requirement.Permission))
             {
                 context.Succeed(requirement);
             }
@@ -26,7 +30,4 @@
             return Task.CompletedTask;
         }
     }
-
-
-
 }

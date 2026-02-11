@@ -2,7 +2,7 @@
 {
     using CRM_Backend.Repositories.Interfaces;
     using Microsoft.AspNetCore.Authorization;
-    using System.Security.Claims;
+    using System.IdentityModel.Tokens.Jwt;
 
     public class ForcePasswordResetHandler
         : AuthorizationHandler<ForcePasswordResetRequirement>
@@ -18,21 +18,23 @@
             AuthorizationHandlerContext context,
             ForcePasswordResetRequirement requirement)
         {
-            var userIdClaim = context.User.FindFirst(ClaimTypes.NameIdentifier);
+            // ✅ JWT SUB claim (because inbound mapping is disabled)
+            var userIdClaim = context.User.FindFirst(JwtRegisteredClaimNames.Sub);
+
             if (userIdClaim == null)
                 return;
 
-            var userId = long.Parse(userIdClaim.Value);
+            if (!long.TryParse(userIdClaim.Value, out var userId))
+                return;
 
             var security = await _security.GetByUserIdAsync(userId);
+
             if (security == null)
                 return;
 
+            // Allow access ONLY when password reset is NOT required
             if (!security.ForcePasswordReset)
                 context.Succeed(requirement);
         }
     }
-
-
-
 }

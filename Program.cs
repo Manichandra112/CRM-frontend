@@ -14,6 +14,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System;
+using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 
 
@@ -105,12 +106,17 @@ builder.Services.Configure<EmailSettings>(
 
 // --------------------------------------------------
 // Authentication (JWT)
-// --------------------------------------------------
+
+JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 .AddJwtBearer(options =>
 {
-    options.RequireHttpsMetadata = false; // dev only
+    options.RequireHttpsMetadata = false;
     options.SaveToken = true;
+
+    // ⭐ CRITICAL FIX
+    options.MapInboundClaims = false;
 
     options.TokenValidationParameters = new TokenValidationParameters
     {
@@ -133,114 +139,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 
 
-//builder.Services.AddAuthorization(options =>
-//{
-//    // ==================================================
-//    // SECURITY / ACCOUNT STATE (NO SUPER-ADMIN BYPASS)
-//    // ==================================================
-
-//    options.AddPolicy("ACCOUNT_ACTIVE", policy =>
-//        policy.RequireClaim("account_status", "ACTIVE")
-//    );
-
-//    options.AddPolicy("PASSWORD_RESET_COMPLETED", policy =>
-//        policy.Requirements.Add(new ForcePasswordResetRequirement())
-//    );
-
-//    // ==================================================
-//    // USER MANAGEMENT
-//    // ==================================================
-
-//    options.AddPolicy("USER_VIEW",
-//        p => p.Requirements.Add(new PermissionRequirement("USER_VIEW")));
-
-//    options.AddPolicy("USER_CREATE",
-//        p => p.Requirements.Add(new PermissionRequirement("USER_CREATE")));
-
-//    options.AddPolicy("USER_UPDATE",
-//        p => p.Requirements.Add(new PermissionRequirement("USER_UPDATE")));
-
-//    options.AddPolicy("USER_LOCK",
-//        p => p.Requirements.Add(new PermissionRequirement("USER_LOCK")));
-
-//    options.AddPolicy("USER_UNLOCK",
-//        p => p.Requirements.Add(new PermissionRequirement("USER_UNLOCK")));
-
-//    options.AddPolicy("USER_ASSIGN_MANAGER",
-//        p => p.Requirements.Add(new PermissionRequirement("USER_ASSIGN_MANAGER")));
-
-//    options.AddPolicy("USER_RESET_PASSWORD",
-//        p => p.Requirements.Add(new PermissionRequirement("USER_RESET_PASSWORD")));
-
-//    options.AddPolicy("USER_VIEW_TEAM",
-//        p => p.Requirements.Add(new PermissionRequirement("USER_VIEW_TEAM")));
-
-//    // ==================================================
-//    // EMPLOYEE / HR
-//    // ==================================================
-
-//    options.AddPolicy("EMP_VIEW",
-//        p => p.Requirements.Add(new PermissionRequirement("EMP_VIEW")));
-
-//    options.AddPolicy("HR_EMP_VIEW",
-//        p => p.Requirements.Add(new PermissionRequirement("HR_EMP_VIEW")));
-
-//    // ==================================================
-//    // SALES
-//    // ==================================================
-
-//    options.AddPolicy("SALES_LEAD_VIEW",
-//        p => p.Requirements.Add(new PermissionRequirement("SALES_LEAD_VIEW")));
-
-//    // ==================================================
-//    // SOCIAL MEDIA
-//    // ==================================================
-
-//    options.AddPolicy("SOCIAL_POST_CREATE",
-//        p => p.Requirements.Add(new PermissionRequirement("SOCIAL_POST_CREATE")));
-
-//    // ==================================================
-//    // DOMAIN MANAGEMENT
-//    // ==================================================
-
-//    options.AddPolicy("DOMAIN_VIEW",
-//        p => p.Requirements.Add(new PermissionRequirement("DOMAIN_VIEW")));
-
-//    options.AddPolicy("DOMAIN_CREATE",
-//        p => p.Requirements.Add(new PermissionRequirement("DOMAIN_CREATE")));
-
-//    options.AddPolicy("DOMAIN_UPDATE",
-//        p => p.Requirements.Add(new PermissionRequirement("DOMAIN_UPDATE")));
-
-//    // ==================================================
-//    // ROLE & PERMISSION MANAGEMENT
-//    // ==================================================
-
-//    options.AddPolicy("ROLE_VIEW",
-//        p => p.Requirements.Add(new PermissionRequirement("ROLE_VIEW")));
-
-//    options.AddPolicy("ROLE_CREATE",
-//        p => p.Requirements.Add(new PermissionRequirement("ROLE_CREATE")));
-
-//    options.AddPolicy("ROLE_UPDATE",
-//        p => p.Requirements.Add(new PermissionRequirement("ROLE_UPDATE")));
-
-//    options.AddPolicy("PERMISSION_VIEW",
-//        p => p.Requirements.Add(new PermissionRequirement("PERMISSION_VIEW")));
-
-//    options.AddPolicy("PERMISSION_ASSIGN",
-//        p => p.Requirements.Add(new PermissionRequirement("PERMISSION_ASSIGN")));
-
-//    // ==================================================
-//    // AUDIT / SECURITY
-//    // ==================================================
-
-//    options.AddPolicy("AUDIT_LOG_VIEW",
-//        p => p.Requirements.Add(new PermissionRequirement("AUDIT_LOG_VIEW")));
-
-//    options.AddPolicy("SECURITY_VIEW",
-//        p => p.Requirements.Add(new PermissionRequirement("SECURITY_VIEW")));
-//});
 
 
 builder.Services.AddAuthorization(options =>
@@ -259,8 +157,7 @@ builder.Services.AddAuthorization(options =>
     // DYNAMIC PERMISSION POLICY
     // -------------------------------
 
-    options.AddPolicy("PERMISSION",
-        policy => policy.Requirements.Add(new PermissionRequirement()));
+   
 });
 
 
