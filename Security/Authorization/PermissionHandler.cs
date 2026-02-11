@@ -27,6 +27,9 @@ namespace CRM_Backend.Security.Authorization
                 context.Succeed(requirement);
             }
 
+            Console.WriteLine("🚀 PROD CHECK: PermissionHandler V3 Loaded");
+
+
             return Task.CompletedTask;
         }
     }
