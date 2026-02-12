@@ -6,4 +6,8 @@
     Task<IEnumerable<long>> GetPermissionIdsByRoleAsync(long roleId);
 
 
+    Task<bool> ExistsAsync(long roleId, long permissionId);
+
+
+
 }

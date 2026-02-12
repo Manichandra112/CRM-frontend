@@ -1,4 +1,5 @@
-﻿using CRM_Backend.Security.Email;
+﻿using CRM_Backend.Exceptions;
+using CRM_Backend.Security.Email;
 using CRM_Backend.Services.Interfaces;
 using Microsoft.Extensions.Options;
 using System.Net;
@@ -15,36 +16,59 @@ namespace CRM_Backend.Services.Implementations
             IOptions<EmailSettings> emailOptions,
             IOptions<SmtpSettings> smtpOptions)
         {
-            _email = emailOptions.Value;
-            _smtp = smtpOptions.Value;
+            _email = emailOptions?.Value
+                ?? throw new ArgumentNullException(nameof(emailOptions));
+
+            _smtp = smtpOptions?.Value
+                ?? throw new ArgumentNullException(nameof(smtpOptions));
         }
 
-        public async Task SendPasswordResetAsync(string userEmail, string resetLink)
+        public async Task SendPasswordResetAsync(
+            string userEmail,
+            string resetLink)
         {
+            if (string.IsNullOrWhiteSpace(userEmail))
+                throw new ValidationException("User email is required.");
+
+            if (string.IsNullOrWhiteSpace(resetLink))
+                throw new ValidationException("Reset link is required.");
+
             var to = string.IsNullOrWhiteSpace(_email.OverrideRecipient)
                 ? userEmail
                 : _email.OverrideRecipient;
 
-            var message = new MailMessage
+            try
             {
-                From = new MailAddress(_smtp.From),
-                Subject = "Reset your CRM password",
-                Body = $"Click the link to reset your password:\n\n{resetLink}",
-                IsBodyHtml = false
-            };
+                using var message = new MailMessage
+                {
+                    From = new MailAddress(_smtp.From),
+                    Subject = "Reset your CRM password",
+                    Body =
+                        $"Hello,\n\n" +
+                        $"Click the link below to reset your password:\n\n" +
+                        $"{resetLink}\n\n" +
+                        $"If you did not request this, ignore this email.",
+                    IsBodyHtml = false
+                };
 
-            message.To.Add(to);
+                message.To.Add(to);
 
-            using var client = new SmtpClient(_smtp.Host, _smtp.Port)
+                using var client = new SmtpClient(_smtp.Host, _smtp.Port)
+                {
+                    Credentials = new NetworkCredential(
+                        _smtp.Username,
+                        _smtp.Password
+                    ),
+                    EnableSsl = _smtp.EnableSsl
+                };
+
+                await client.SendMailAsync(message);
+            }
+            catch (SmtpException ex)
             {
-                Credentials = new NetworkCredential(
-                    _smtp.Username,
-                    _smtp.Password
-                ),
-                EnableSsl = true
-            };
-
-            await client.SendMailAsync(message);
+                throw new InternalServerException(
+                    $"Email sending failed: {ex.Message}");
+            }
         }
     }
 }

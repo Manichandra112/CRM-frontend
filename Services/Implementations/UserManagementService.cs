@@ -1,6 +1,7 @@
 ﻿using CRM_Backend.Data;
 using CRM_Backend.Domain.Entities;
 using CRM_Backend.DTOs.Users;
+using CRM_Backend.Exceptions;
 using CRM_Backend.Repositories.Interfaces;
 using CRM_Backend.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -36,103 +37,119 @@ public class UserManagementService : IUserManagementService
 
     public async Task<long> CreateUserAsync(CreateUserDto dto, long createdBy)
     {
-        // 1️⃣ Domain validation
-        var domain = await _domains.GetByCodeAsync(dto.DomainCode)
-            ?? throw new Exception("Invalid domain");
+        if (dto == null)
+            throw new ValidationException("User data is required.");
 
-        // 2️⃣ Uniqueness check
-        var userExists = await _context.Users.AnyAsync(u =>
-            u.Email == dto.Email || u.Username == dto.Username);
+        if (dto.Profile == null)
+            throw new ValidationException("Profile information is required.");
 
-        if (userExists)
-            throw new Exception("User already exists");
+        if (dto.RoleCodes == null || !dto.RoleCodes.Any())
+            throw new ValidationException("At least one role must be assigned.");
 
-        // 3️⃣ User
-        var user = new User
+        using var transaction = await _context.Database.BeginTransactionAsync();
+
+        try
         {
-            Username = dto.Username,
-            Email = dto.Email,
-            Department = dto.Profile.Department,
-            Designation = dto.Profile.Designation,
-            AccountStatus = "ACTIVE",
-            DomainId = domain.DomainId,
-            CreatedAt = DateTime.UtcNow,
-            CreatedBy = createdBy,
-            CreatedVia = "ADMIN"
-        };
+            var domain = await _domains.GetByCodeAsync(dto.DomainCode)
+                ?? throw new NotFoundException($"Domain '{dto.DomainCode}' not found.");
 
-        _context.Users.Add(user);
-        await _context.SaveChangesAsync();
+            var userExists = await _context.Users.AnyAsync(u =>
+                u.Email == dto.Email || u.Username == dto.Username);
 
-        // 4️⃣ Profile
-        _context.UserProfiles.Add(new UserProfile
-        {
-            UserId = user.UserId,
-            FirstName = dto.Profile.FirstName,
-            LastName = dto.Profile.LastName,
-            MobileNumber = dto.Profile.MobileNumber
-        });
+            if (userExists)
+                throw new ConflictException("A user with the same email or username already exists.");
 
-        // 5️⃣ Security
-        _context.UserSecurity.Add(new UserSecurity
-        {
-            UserId = user.UserId,
-            ForcePasswordReset = true,
-            FailedLoginCount = 0,
-            MfaEnabled = false
-        });
+            var user = new User
+            {
+                Username = dto.Username,
+                Email = dto.Email,
+                Department = dto.Profile.Department,
+                Designation = dto.Profile.Designation,
+                AccountStatus = "ACTIVE",
+                DomainId = domain.DomainId,
+                CreatedAt = DateTime.UtcNow,
+                CreatedBy = createdBy,
+                CreatedVia = "ADMIN"
+            };
 
-        // 6️⃣ Password
-        _context.UserPasswords.Add(new UserPassword
-        {
-            UserId = user.UserId,
-            PasswordHash = _passwordService.HashPassword(dto.TemporaryPassword),
-            IsCurrent = true,
-            CreatedAt = DateTime.UtcNow
-        });
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync(); // Needed to generate UserId
 
-        // 7️⃣ Roles
-        foreach (var roleCode in dto.RoleCodes)
-        {
-            var roleId = await _roles.GetRoleIdByCodeAsync(roleCode);
-
-            _context.UserRoles.Add(new UserRole
+            _context.UserProfiles.Add(new UserProfile
             {
                 UserId = user.UserId,
-                RoleId = roleId,
-                AssignedAt = DateTime.UtcNow,
-                AssignedBy = createdBy
+                FirstName = dto.Profile.FirstName,
+                LastName = dto.Profile.LastName,
+                MobileNumber = dto.Profile.MobileNumber
             });
-        }
 
-        _context.AuditLogs.Add(new AuditLog
-        {
-            ActorUserId = createdBy,
-            TargetUserId = user.UserId,
-            Action = "USER_CREATE",
-            Module = "USERS",
-            Metadata = JsonSerializer.Serialize(new
+            _context.UserSecurity.Add(new UserSecurity
             {
-                domain = dto.DomainCode
-            }),
-            CreatedAt = DateTime.UtcNow
-        });
+                UserId = user.UserId,
+                ForcePasswordReset = true,
+                FailedLoginCount = 0,
+                MfaEnabled = false
+            });
 
-        await _context.SaveChangesAsync();
-        return user.UserId;
+            _context.UserPasswords.Add(new UserPassword
+            {
+                UserId = user.UserId,
+                PasswordHash = _passwordService.HashPassword(dto.TemporaryPassword),
+                IsCurrent = true,
+                CreatedAt = DateTime.UtcNow
+            });
+
+            foreach (var roleCode in dto.RoleCodes)
+            {
+                var roleId = await _roles.GetRoleIdByCodeAsync(roleCode);
+
+                _context.UserRoles.Add(new UserRole
+                {
+                    UserId = user.UserId,
+                    RoleId = roleId,
+                    AssignedAt = DateTime.UtcNow,
+                    AssignedBy = createdBy
+                });
+            }
+
+            _context.AuditLogs.Add(new AuditLog
+            {
+                ActorUserId = createdBy,
+                TargetUserId = user.UserId,
+                Action = "USER_CREATE",
+                Module = "USERS",
+                Metadata = JsonSerializer.Serialize(new
+                {
+                    domain = dto.DomainCode,
+                    roles = dto.RoleCodes
+                }),
+                CreatedAt = DateTime.UtcNow
+            });
+
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            return user.UserId;
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
     }
+
 
     // ✅ SINGLE, CORRECT METHOD — NO DUPLICATES
     public async Task AssignManagerAsync(long userId, long managerId)
     {
         if (userId == managerId)
-            throw new Exception("User cannot be their own manager");
+            throw new BusinessRuleException("A user cannot be assigned as their own manager.");
 
         var user = await _context.Users.FindAsync(userId)
-            ?? throw new Exception("User not found");
+?? throw new NotFoundException($"User {userId} not found.");
 
         var manager = await _context.Users.FindAsync(managerId)
-            ?? throw new Exception("Manager not found");
+?? throw new NotFoundException($"Manager {managerId} not found.");
 
         user.ManagerId = managerId;
         _context.AuditLogs.Add(new AuditLog
@@ -200,7 +217,7 @@ public class UserManagementService : IUserManagementService
     public async Task<List<UserLookupDto>> GetManagersByDomainAsync(string domainCode)
     {
         var domain = await _domains.GetByCodeAsync(domainCode)
-            ?? throw new Exception("Invalid domain");
+?? throw new NotFoundException($"Domain '{domainCode}' not found.");
 
         return await _context.Users
             .Where(u =>
@@ -250,7 +267,7 @@ public class UserManagementService : IUserManagementService
             })
             .FirstOrDefaultAsync();
 
-        return user ?? throw new Exception("User not found");
+        return user ?? throw new NotFoundException($"User {userId} not found.");
     }
 
 
@@ -272,17 +289,17 @@ public class UserManagementService : IUserManagementService
     public async Task AssignRoleToUserAsync(long userId, string roleCode, long assignedBy)
     {
         var user = await _context.Users.FindAsync(userId)
-            ?? throw new Exception("User not found");
+?? throw new NotFoundException($"User {userId} not found.");
 
         var role = await _context.Roles
             .FirstOrDefaultAsync(r => r.RoleCode == roleCode)
-            ?? throw new Exception("Role not found");
+?? throw new NotFoundException($"Role '{roleCode}' not found.");
 
         var alreadyAssigned = await _context.UserRoles
             .AnyAsync(ur => ur.UserId == userId && ur.RoleId == role.RoleId);
 
         if (alreadyAssigned)
-            throw new Exception("Role already assigned to user");
+            throw new ConflictException("Role is already assigned to the user.");
 
         _context.UserRoles.Add(new UserRole
         {
@@ -298,11 +315,11 @@ public class UserManagementService : IUserManagementService
     {
         var role = await _context.Roles
             .FirstOrDefaultAsync(r => r.RoleCode == roleCode)
-            ?? throw new Exception("Role not found");
+?? throw new NotFoundException($"Role '{roleCode}' not found.");
 
         var userRole = await _context.UserRoles
             .FirstOrDefaultAsync(ur => ur.UserId == userId && ur.RoleId == role.RoleId)
-            ?? throw new Exception("Role not assigned to user");
+?? throw new BusinessRuleException("The role is not assigned to this user.");
 
         _context.UserRoles.Remove(userRole);
         await _context.SaveChangesAsync();
@@ -324,7 +341,8 @@ public class UserManagementService : IUserManagementService
         var user = await _context.Users
             .Include(u => u.Profile)
             .FirstOrDefaultAsync(u => u.UserId == userId)
-            ?? throw new Exception("User not found");
+            ?? throw new NotFoundException($"User {userId} not found.");
+
 
         // Track what changed (important for audit)
         var changes = new List<string>();
@@ -420,10 +438,10 @@ public class UserManagementService : IUserManagementService
     public async Task LockUserAsync(long userId, string reason, long lockedBy)
     {
         var user = await _context.Users.FindAsync(userId)
-            ?? throw new Exception("User not found");
+?? throw new NotFoundException($"User {userId} not found.");
 
         if (user.AccountStatus == "LOCKED")
-            throw new Exception("User already locked");
+            throw new BusinessRuleException("User account is already locked.");
 
         user.AccountStatus = "LOCKED";
         user.LockReason = reason;
@@ -451,10 +469,10 @@ public class UserManagementService : IUserManagementService
     public async Task UnlockUserAsync(long userId, long unlockedBy)
     {
         var user = await _context.Users.FindAsync(userId)
-            ?? throw new Exception("User not found");
+?? throw new NotFoundException($"User {userId} not found.");
 
         if (user.AccountStatus != "LOCKED")
-            throw new Exception("User is not locked");
+            throw new BusinessRuleException("User account is not locked.");
 
         user.AccountStatus = "ACTIVE";
         user.LockReason = null;

@@ -14,6 +14,14 @@ public class RoleRepository : IRoleRepository
         _context = context;
     }
 
+
+    public async Task<Role?> GetByCodeAsync(string roleCode)
+    {
+        return await _context.Roles
+            .FirstOrDefaultAsync(r => r.RoleCode == roleCode);
+    }
+
+
     public async Task<Role> CreateAsync(
         string roleName,
         string roleCode,

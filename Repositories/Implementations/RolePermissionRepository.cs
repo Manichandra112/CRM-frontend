@@ -52,7 +52,12 @@ public class RolePermissionRepository : IRolePermissionRepository
     }
 
 
-    
-    
+    public async Task<bool> ExistsAsync(long roleId, long permissionId)
+    {
+        return await _context.RolePermissions
+            .AnyAsync(rp => rp.RoleId == roleId && rp.PermissionId == permissionId);
+    }
+
+
 
 }

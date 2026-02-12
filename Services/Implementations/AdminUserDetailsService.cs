@@ -1,5 +1,6 @@
 ﻿using CRM_Backend.Data;
 using CRM_Backend.DTOs.Users;
+using CRM_Backend.Exceptions;
 using CRM_Backend.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,12 +12,17 @@ public class AdminUserDetailsService : IAdminUserDetailsService
 
     public AdminUserDetailsService(CrmAuthDbContext context)
     {
-        _context = context;
+        _context = context
+            ?? throw new ArgumentNullException(nameof(context));
     }
 
     public async Task<AdminUserDetailsDto> GetUserDetailsAsync(long userId)
     {
+        if (userId <= 0)
+            throw new ValidationException("Invalid user id.");
+
         var user = await _context.Users
+            .AsNoTracking()
             .Where(u => u.UserId == userId && u.DeletedAt == null)
             .Select(u => new AdminUserDetailsDto
             {
@@ -59,6 +65,9 @@ public class AdminUserDetailsService : IAdminUserDetailsService
             })
             .FirstOrDefaultAsync();
 
-        return user ?? throw new Exception("User not found");
+        if (user == null)
+            throw new NotFoundException($"User {userId} not found.");
+
+        return user;
     }
 }

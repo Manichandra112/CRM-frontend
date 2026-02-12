@@ -17,5 +17,8 @@ public interface IPermissionRepository
 
     Task<List<Permission>> GetByCodesAsync(IEnumerable<string> permissionCodes);
 
+    Task<Permission?> GetByCodeAsync(string permissionCode);
+
+
 
 }

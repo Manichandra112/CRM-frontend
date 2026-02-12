@@ -13,57 +13,80 @@ public class EmployeeService : IEmployeeService
     }
 
     public async Task<PagedResult<EmployeeDto>> GetVisibleEmployeesAsync(
-        long currentUserId,
-        IEnumerable<string> roles,
-        IEnumerable<string> permissions,
-        EmployeeFilterDto filter)
+     long currentUserId,
+     IEnumerable<string>? roles,
+     IEnumerable<string>? permissions,
+     EmployeeFilterDto filter)
     {
-        var query = _context.Users.AsQueryable();
+        if (filter == null)
+            throw new ArgumentNullException(nameof(filter));
 
-        // 🔐 VISIBILITY RULES (Zoho-style)
-        if (permissions.Contains("CRM_FULL_ACCESS"))
+        roles ??= Enumerable.Empty<string>();
+        permissions ??= Enumerable.Empty<string>();
+
+        var normalizedPermissions = permissions
+            .Select(p => p.ToUpper())
+            .ToHashSet();
+
+        var normalizedRoles = roles
+            .Select(r => r.ToUpper())
+            .ToList();
+
+        var query = _context.Users
+            .AsNoTracking()
+            .AsQueryable();
+
+        // 🔐 VISIBILITY RULES
+        if (normalizedPermissions.Contains("CRM_FULL_ACCESS"))
         {
-            // Admin → all employees
+            // Full visibility
         }
-        else if (roles.Any(r => r.EndsWith("_MANAGER")))
+        else if (normalizedRoles.Any(r => r.EndsWith("_MANAGER")))
         {
-            // Manager → self + direct reports
             query = query.Where(u =>
                 u.UserId == currentUserId ||
                 u.ManagerId == currentUserId);
         }
         else
         {
-            // Normal user → self only
             query = query.Where(u => u.UserId == currentUserId);
         }
 
         // 🌍 DOMAIN FILTER
         if (!string.IsNullOrWhiteSpace(filter.DomainCode))
         {
-            query = query.Where(u => u.Domain.DomainCode == filter.DomainCode);
+            var domainCode = filter.DomainCode.Trim().ToUpper();
+            query = query.Where(u =>
+                u.Domain.DomainCode.ToUpper() == domainCode);
         }
 
-        // 👤 MANAGER FILTER (optional)
+        // 👤 MANAGER FILTER
         if (filter.ManagerId.HasValue)
         {
-            query = query.Where(u => u.ManagerId == filter.ManagerId);
+            query = query.Where(u =>
+                u.ManagerId == filter.ManagerId.Value);
         }
 
-        // 🔍 SEARCH
+        // 🔍 SEARCH (case-insensitive for PostgreSQL)
         if (!string.IsNullOrWhiteSpace(filter.Search))
         {
+            var search = $"%{filter.Search.Trim()}%";
+
             query = query.Where(u =>
-                u.Username.Contains(filter.Search) ||
-                u.Email.Contains(filter.Search));
+                EF.Functions.ILike(u.Username, search) ||
+                EF.Functions.ILike(u.Email, search));
         }
+
+        // 📄 Pagination Safety
+        var page = filter.Page <= 0 ? 1 : filter.Page;
+        var pageSize = filter.PageSize <= 0 ? 10 : filter.PageSize;
 
         var total = await query.CountAsync();
 
         var items = await query
             .OrderBy(u => u.Username)
-            .Skip((filter.Page - 1) * filter.PageSize)
-            .Take(filter.PageSize)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .Select(u => new EmployeeDto
             {
                 UserId = u.UserId,
@@ -79,8 +102,9 @@ public class EmployeeService : IEmployeeService
         {
             Items = items,
             TotalCount = total,
-            Page = filter.Page,
-            PageSize = filter.PageSize
+            Page = page,
+            PageSize = pageSize
         };
     }
+
 }

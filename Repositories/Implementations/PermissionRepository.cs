@@ -81,5 +81,10 @@ public class PermissionRepository : IPermissionRepository
             .Where(p => permissionCodes.Contains(p.PermissionCode) && p.Active)
             .ToListAsync();
     }
+    public async Task<Permission?> GetByCodeAsync(string permissionCode)
+    {
+        return await _context.Permissions
+            .FirstOrDefaultAsync(p => p.PermissionCode == permissionCode);
+    }
 
 }

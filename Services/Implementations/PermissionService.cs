@@ -1,5 +1,6 @@
-﻿using CRM_Backend.DTOs.Permissions;
-using CRM_Backend.Domain.Entities;
+﻿using CRM_Backend.Domain.Entities;
+using CRM_Backend.DTOs.Permissions;
+using CRM_Backend.Exceptions;
 using CRM_Backend.Repositories.Interfaces;
 using CRM_Backend.Services.Interfaces;
 
@@ -11,15 +12,33 @@ public class PermissionService : IPermissionService
 
     public PermissionService(IPermissionRepository permissions)
     {
-        _permissions = permissions;
+        _permissions = permissions
+            ?? throw new ArgumentNullException(nameof(permissions));
     }
 
     public async Task<long> CreateAsync(CreatePermissionDto dto)
     {
+        if (dto == null)
+            throw new ValidationException("Permission data is required.");
+
+        if (string.IsNullOrWhiteSpace(dto.PermissionCode))
+            throw new ValidationException("PermissionCode is required.");
+
+        if (string.IsNullOrWhiteSpace(dto.Module))
+            throw new ValidationException("Module is required.");
+
+        var normalizedCode = dto.PermissionCode.Trim().ToUpper();
+        var normalizedModule = dto.Module.Trim().ToUpper();
+
+        var existing = await _permissions.GetByCodeAsync(normalizedCode);
+        if (existing != null)
+            throw new ConflictException(
+                $"Permission '{normalizedCode}' already exists.");
+
         return await _permissions.CreateAsync(
-            dto.PermissionCode,
-            dto.Description,
-            dto.Module
+            normalizedCode,
+            dto.Description?.Trim(),
+            normalizedModule
         );
     }
 
@@ -28,16 +47,18 @@ public class PermissionService : IPermissionService
         return await _permissions.GetAllAsync();
     }
 
-    // ✅ UPDATE LOGIC
     public async Task UpdateAsync(long id, UpdatePermissionDto dto)
     {
-        var permission = await _permissions.GetByIdAsync(id);
+        if (id <= 0)
+            throw new ValidationException("Invalid permission id.");
 
-        if (permission == null)
-            throw new Exception("Permission not found");
+        if (dto == null)
+            throw new ValidationException("Update data is required.");
 
-        // Business rule:
-        // PermissionCode is IMMUTABLE
+        var permission = await _permissions.GetByIdAsync(id)
+            ?? throw new NotFoundException($"Permission {id} not found.");
+
+        // PermissionCode is immutable by design
         permission.Active = dto.IsActive;
         permission.UpdatedAt = DateTime.UtcNow;
 

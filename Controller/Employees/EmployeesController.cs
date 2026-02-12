@@ -1,13 +1,14 @@
 ﻿using CRM_Backend.DTOs.Employees;
+using CRM_Backend.Exceptions;
+using CRM_Backend.Security.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
 [ApiController]
 [Route("api/employees")]
-[Authorize(Policy = "EMP_VIEW")]
-[Authorize(Policy = "PASSWORD_RESET_COMPLETED")]
 [Authorize(Policy = "ACCOUNT_ACTIVE")]
+[Authorize(Policy = "PASSWORD_RESET_COMPLETED")]
 public class EmployeesController : ControllerBase
 {
     private readonly IEmployeeService _service;
@@ -18,11 +19,16 @@ public class EmployeesController : ControllerBase
     }
 
     [HttpGet]
+    [HasPermission("USER_VIEW")]
     public async Task<IActionResult> Get([FromQuery] EmployeeFilterDto filter)
     {
-        var userId = long.Parse(
-            User.FindFirst(ClaimTypes.NameIdentifier)!.Value
-        );
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+
+        if (userIdClaim == null)
+            throw new UnauthorizedException("User id claim missing.");
+
+        if (!long.TryParse(userIdClaim.Value, out var userId))
+            throw new UnauthorizedException("Invalid user id claim.");
 
         var roles = User.FindAll(ClaimTypes.Role)
                         .Select(r => r.Value)
@@ -39,3 +45,4 @@ public class EmployeesController : ControllerBase
         return Ok(result);
     }
 }
+

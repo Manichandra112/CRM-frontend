@@ -64,6 +64,20 @@ namespace CRM_Backend.Repositories.Implementations
                 .ToListAsync();
         }
 
+        public async Task<List<DomainEntity>> GetByCodesAsync(IEnumerable<string> codes)
+        {
+            var normalized = codes
+                .Where(c => !string.IsNullOrWhiteSpace(c))
+                .Select(c => c.Trim().ToUpper())
+                .ToList();
+
+            return await _context.Domains
+                .AsNoTracking()
+                .Where(d => normalized.Contains(d.DomainCode.ToUpper()))
+                .ToListAsync();
+        }
+
+
 
     }
 }

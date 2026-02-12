@@ -5,13 +5,14 @@ namespace CRM_Backend.Services.Implementations;
 
 public class PasswordService : IPasswordService
 {
+    private const int WorkFactor = 12; // adjustable cost factor
+
     public string HashPassword(string plainPassword)
     {
         if (string.IsNullOrWhiteSpace(plainPassword))
-            throw new ArgumentException("Password cannot be empty.");
+            throw new ArgumentException("Password cannot be empty.", nameof(plainPassword));
 
-        // BCrypt automatically handles salt
-        return BCrypt.Net.BCrypt.HashPassword(plainPassword);
+        return BCrypt.Net.BCrypt.HashPassword(plainPassword, WorkFactor);
     }
 
     public bool VerifyPassword(string plainPassword, string passwordHash)
@@ -22,6 +23,13 @@ public class PasswordService : IPasswordService
         if (string.IsNullOrWhiteSpace(passwordHash))
             return false;
 
-        return BCrypt.Net.BCrypt.Verify(plainPassword, passwordHash);
+        try
+        {
+            return BCrypt.Net.BCrypt.Verify(plainPassword, passwordHash);
+        }
+        catch
+        {
+            return false;
+        }
     }
 }

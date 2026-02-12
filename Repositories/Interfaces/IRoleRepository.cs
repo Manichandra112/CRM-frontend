@@ -20,6 +20,9 @@ public interface IRoleRepository
 
     Task<Role?> GetByIdAsync(long id);
 
+    Task<Role?> GetByCodeAsync(string roleCode);
+
+
     Task UpdateAsync(Role role);
 
     Task<List<Role>> GetByCodesAsync(IEnumerable<string> roleCodes);
