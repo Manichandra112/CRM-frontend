@@ -9,7 +9,7 @@ namespace CRM_Backend.Controllers.Debug;
 [Route("debug")]
 public class DebugClaimsController : ControllerBase
 {
-    [HttpGet("claims")]
+   [HttpGet("claims")]
     [Authorize]
     public IActionResult GetClaims()
     {
