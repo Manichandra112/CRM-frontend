@@ -9,7 +9,6 @@ namespace CRM_Backend.Controllers.Debug;
 [Route("debug")]
 public class DebugClaimsController : ControllerBase
 {
-    // Authenticated only, no extra policies or permission checks
     [HttpGet("claims")]
     [Authorize]
     public IActionResult GetClaims()
