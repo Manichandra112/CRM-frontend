@@ -26,7 +26,7 @@ public class AdminPermissionsController : ControllerBase
 
     // CREATE NEW PERMISSION
     [HttpPost]
-    [HasPermission("PERMISSION_ASSIGN")]
+    [HasPermission("PERMISSION_MANAGE")]
     public async Task<IActionResult> Create(CreatePermissionDto dto)
     {
         var id = await _permissions.CreateAsync(dto);
@@ -43,7 +43,7 @@ public class AdminPermissionsController : ControllerBase
 
     // UPDATE PERMISSION
     [HttpPut("{id:long}")]
-    [HasPermission("PERMISSION_ASSIGN")]
+    [HasPermission("PERMISSION_MANAGE")]
     public async Task<IActionResult> Update(long id, UpdatePermissionDto dto)
     {
         await _permissions.UpdateAsync(id, dto);

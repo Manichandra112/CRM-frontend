@@ -1,12 +1,9 @@
-﻿
-
-using CRM_Backend.DTOs.Users;
+﻿using CRM_Backend.DTOs.Users;
 using CRM_Backend.Security.Authorization;
+using CRM_Backend.Security.Extensions;
 using CRM_Backend.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
-using CRM_Backend.Security.Extensions;
 
 namespace CRM_Backend.Controller.Admin;
 
@@ -25,30 +22,35 @@ public class AdminUserRolesController : ControllerBase
         _users = users;
     }
 
-    // ASSIGN ROLE TO USER
+    // --------------------------------------------------
+    // ASSIGN ROLE TO USER (ADMIN)
+    // --------------------------------------------------
     [HttpPost]
-    [HasPermission("USER_ASSIGN_MANAGER")]
+    [HasPermission("USER_ASSIGN_ROLE")]
     public async Task<IActionResult> AssignRole(AssignUserRoleDto dto)
     {
-
         var adminId = User.GetUserId();
 
         await _users.AssignRoleToUserAsync(dto.UserId, dto.RoleCode, adminId);
         return Ok();
     }
 
-    // REMOVE ROLE FROM USER
+    // --------------------------------------------------
+    // REMOVE ROLE FROM USER (ADMIN)
+    // --------------------------------------------------
     [HttpDelete]
-    [HasPermission("USER_ASSIGN_MANAGER")]
+    [HasPermission("USER_ASSIGN_ROLE")]
     public async Task<IActionResult> RemoveRole(AssignUserRoleDto dto)
     {
         await _users.RemoveRoleFromUserAsync(dto.UserId, dto.RoleCode);
         return Ok();
     }
 
-    // VIEW USER ROLES
+    // --------------------------------------------------
+    // VIEW USER ROLES (ADMIN)
+    // --------------------------------------------------
     [HttpGet("{userId:long}")]
-    [HasPermission("USER_VIEW")]
+    [HasPermission("USER_VIEW_ALL")]
     public async Task<IActionResult> GetUserRoles(long userId)
     {
         var roles = await _users.GetUserRolesAsync(userId);
