@@ -27,6 +27,6 @@ steps:
     arguments: --no-cache
 
 - script: |
-    curl -X POST -k "https://89.116.20.215:9443/api/stacks/webhooks/436aad94-2603-40ed-bdcf-84fb642c8fcc?IMAGE_TAG=$(Build.BuildId)"
+    curl -X POST "https://89.116.20.215:9443/api/stacks/webhooks/436aad94-2603-40ed-bdcf-84fb642c8fcc?IMAGE_TAG=$(Build.BuildId)"
   displayName: 'Trigger Portainer webhook deployment'
   condition: succeeded()
