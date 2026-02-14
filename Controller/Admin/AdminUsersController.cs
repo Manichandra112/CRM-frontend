@@ -39,11 +39,15 @@ public class AdminUsersController : ControllerBase
     [HttpGet]
     [HasPermission("USER_VIEW")]
     public async Task<IActionResult> GetUsers(
-        [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 25)
+     [FromQuery] int page = 1,
+     [FromQuery] int pageSize = 25,
+     [FromQuery] string? search = null,
+     [FromQuery] string? status = null,
+     [FromQuery] string? role = null)
     {
-        return Ok(await _listService.GetUsersAsync(page, pageSize));
+        return Ok(await _listService.GetUsersAsync(page, pageSize, search, status, role));
     }
+
 
     // USER DETAILS
     [HttpGet("{userId:long}")]

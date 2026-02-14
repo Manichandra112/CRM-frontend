@@ -1,5 +1,11 @@
-﻿using CRM_Backend.Domain.Entities;
+﻿using System;
+using System.Threading.Tasks;
+using CRM_Backend.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+
+// Alias to avoid collision with namespace named "Domain"
+using DomainEntity = CRM_Backend.Domain.Entities.Domain;
 
 namespace CRM_Backend.Data.Seed
 {
@@ -18,13 +24,15 @@ namespace CRM_Backend.Data.Seed
         {
             await _db.Database.MigrateAsync();
 
-            // 1. DOMAIN
+            // --------------------------------------------------
+            // 1️⃣ ENSURE DOMAIN (SYSTEM)
+            // --------------------------------------------------
             var systemDomain = await _db.Domains
                 .FirstOrDefaultAsync(d => d.DomainCode == "SYSTEM");
 
             if (systemDomain == null)
             {
-                systemDomain = new CRM_Backend.Domain.Entities.Domain
+                systemDomain = new DomainEntity
                 {
                     DomainCode = "SYSTEM",
                     DomainName = "System Root",
@@ -36,7 +44,9 @@ namespace CRM_Backend.Data.Seed
                 await _db.SaveChangesAsync();
             }
 
-            // 2. ROLE
+            // --------------------------------------------------
+            // 2️⃣ ENSURE ROLE (ADMIN)
+            // --------------------------------------------------
             var adminRole = await _db.Roles
                 .FirstOrDefaultAsync(r =>
                     r.RoleCode == "ADMIN" &&
@@ -59,7 +69,51 @@ namespace CRM_Backend.Data.Seed
                 await _db.SaveChangesAsync();
             }
 
-            // 3. ADMIN USER
+            // --------------------------------------------------
+            // 3️⃣ ENSURE PERMISSION (CRM_FULL_ACCESS)
+            // --------------------------------------------------
+            var fullAccessPermission = await _db.Permissions
+                .FirstOrDefaultAsync(p => p.PermissionCode == "CRM_FULL_ACCESS");
+
+            if (fullAccessPermission == null)
+            {
+                fullAccessPermission = new Permission
+                {
+                    PermissionCode = "CRM_FULL_ACCESS",
+                    Description = "Full access to all CRM modules",
+                    Module = "SYSTEM",
+                    Active = true,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                _db.Permissions.Add(fullAccessPermission);
+                await _db.SaveChangesAsync();
+            }
+
+            // --------------------------------------------------
+            // 4️⃣ ENSURE ROLE ↔ PERMISSION MAPPING
+            // --------------------------------------------------
+            var rolePermissionExists = await _db.RolePermissions
+                .AnyAsync(rp =>
+                    rp.RoleId == adminRole.RoleId &&
+                    rp.PermissionId == fullAccessPermission.PermissionId);
+
+            if (!rolePermissionExists)
+            {
+                _db.RolePermissions.Add(new RolePermission
+                {
+                    RoleId = adminRole.RoleId,
+                    PermissionId = fullAccessPermission.PermissionId,
+                    AssignedAt = DateTime.UtcNow,
+                    AssignedBy = null
+                });
+
+                await _db.SaveChangesAsync();
+            }
+
+            // --------------------------------------------------
+            // 5️⃣ ENSURE ADMIN USER
+            // --------------------------------------------------
             var adminEmail = "admin@crm.com";
             var adminPassword = "Admin@123";
 
@@ -80,8 +134,16 @@ namespace CRM_Backend.Data.Seed
 
                 _db.Users.Add(adminUser);
                 await _db.SaveChangesAsync();
+            }
 
-                // 4. PASSWORD
+            // --------------------------------------------------
+            // 6️⃣ ENSURE PASSWORD
+            // --------------------------------------------------
+            var hasPassword = await _db.UserPasswords
+                .AnyAsync(p => p.UserId == adminUser.UserId && p.IsCurrent);
+
+            if (!hasPassword)
+            {
                 _db.UserPasswords.Add(new UserPassword
                 {
                     UserId = adminUser.UserId,
@@ -90,15 +152,38 @@ namespace CRM_Backend.Data.Seed
                     CreatedAt = DateTime.UtcNow
                 });
 
-                // 5. SECURITY
+                await _db.SaveChangesAsync();
+            }
+
+            // --------------------------------------------------
+            // 7️⃣ ENSURE SECURITY ROW
+            // --------------------------------------------------
+            var hasSecurity = await _db.UserSecurity
+                .AnyAsync(s => s.UserId == adminUser.UserId);
+
+            if (!hasSecurity)
+            {
                 _db.UserSecurity.Add(new UserSecurity
                 {
                     UserId = adminUser.UserId,
                     ForcePasswordReset = false,
-                    FailedLoginCount = 0
+                    FailedLoginCount = 0,
+                    MfaEnabled = false
                 });
 
-                // 6. ROLE ASSIGNMENT
+                await _db.SaveChangesAsync();
+            }
+
+            // --------------------------------------------------
+            // 8️⃣ ENSURE USER ↔ ROLE MAPPING
+            // --------------------------------------------------
+            var userRoleExists = await _db.UserRoles
+                .AnyAsync(ur =>
+                    ur.UserId == adminUser.UserId &&
+                    ur.RoleId == adminRole.RoleId);
+
+            if (!userRoleExists)
+            {
                 _db.UserRoles.Add(new UserRole
                 {
                     UserId = adminUser.UserId,
@@ -111,5 +196,4 @@ namespace CRM_Backend.Data.Seed
             }
         }
     }
-
 }

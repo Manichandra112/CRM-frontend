@@ -14,57 +14,19 @@ public class AdminUserListService : IAdminUserListService
         _context = context;
     }
 
-    //public async Task<AdminUserListResponseDto> GetUsersAsync(
-    // int page,
-    // int pageSize)
-    //{
-    //    var query = _context.Users
-    //        .Where(u => u.DeletedAt == null);
-
-    //    var total = await query.CountAsync();
-
-    //    var users = await query
-    //        .OrderBy(u => u.Username)
-    //        .Skip((page - 1) * pageSize)
-    //        .Take(pageSize)
-    //        .Select(u => new AdminUserListItemDto
-    //        {
-    //            UserId = u.UserId,
-    //            Name = u.Profile.FirstName + " " + u.Profile.LastName,
-    //            Username = u.Username,
-    //            Email = u.Email,
-    //            Department = u.Department,
-    //            Designation = u.Designation,
-    //            AccountStatus = u.AccountStatus,
-    //            ManagerName = u.Manager != null
-    //                ? u.Manager.Profile.FirstName + " " + u.Manager.Profile.LastName
-    //                : null,
-    //            Roles = u.UserRoles
-    //                .Select(r => r.Role.RoleName)
-    //                .ToList(),
-    //            CreatedAt = u.CreatedAt,
-    //            LastActivityAt = u.LastActivityAt
-    //        })
-    //        .ToListAsync();
-
-    //    return new AdminUserListResponseDto
-    //    {
-    //        Total = total,
-    //        Page = page,
-    //        PageSize = pageSize,
-    //        Users = users
-    //    };
-    //}
-
     public async Task<AdminUserListResponseDto> GetUsersAsync(
-    int page,
-    int pageSize)
+        int page,
+        int pageSize,
+        string? search,
+        string? status,
+        string? role)
     {
-        // Defensive pagination
+        // ----------------------------
+        // Defensive Pagination
+        // ----------------------------
         page = page <= 0 ? 1 : page;
         pageSize = pageSize <= 0 ? 10 : pageSize;
 
-        // Cap maximum page size
         if (pageSize > 100)
             pageSize = 100;
 
@@ -72,10 +34,59 @@ public class AdminUserListService : IAdminUserListService
             .AsNoTracking()
             .Where(u => u.DeletedAt == null);
 
+        // ----------------------------
+        // SEARCH FILTER (PostgreSQL optimized)
+        // ----------------------------
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var pattern = $"%{search.Trim()}%";
+
+            query = query.Where(u =>
+                EF.Functions.ILike(u.Username!, pattern) ||
+                EF.Functions.ILike(u.Email!, pattern) ||
+                (u.Profile != null &&
+                    (
+                        EF.Functions.ILike(u.Profile.FirstName!, pattern) ||
+                        EF.Functions.ILike(u.Profile.LastName!, pattern)
+                    )
+                )
+            );
+        }
+
+        // ----------------------------
+        // STATUS FILTER (String-based safe compare)
+        // ----------------------------
+        if (!string.IsNullOrWhiteSpace(status))
+        {
+            var normalized = status.Trim().ToUpper();
+            query = query.Where(u =>
+                u.AccountStatus != null &&
+                u.AccountStatus.ToUpper() == normalized);
+        }
+
+        // ----------------------------
+        // ROLE FILTER
+        // ----------------------------
+        if (!string.IsNullOrWhiteSpace(role))
+        {
+            query = query.Where(u =>
+                u.UserRoles.Any(ur => ur.Role.RoleName == role));
+        }
+
+        // ----------------------------
+        // Count AFTER filtering
+        // ----------------------------
         var total = await query.CountAsync();
 
+        // ----------------------------
+        // Deterministic Ordering
+        // ----------------------------
+        query = query.OrderByDescending(u => u.CreatedAt);
+
+        // ----------------------------
+        // Pagination + Projection
+        // ----------------------------
         var users = await query
-            .OrderBy(u => u.Username)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .Select(u => new AdminUserListItemDto
@@ -115,7 +126,4 @@ public class AdminUserListService : IAdminUserListService
             Users = users
         };
     }
-
-
-
 }

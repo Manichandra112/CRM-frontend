@@ -6,6 +6,9 @@ public interface IAdminUserListService
 {
     Task<AdminUserListResponseDto> GetUsersAsync(
      int page,
-     int pageSize);
+     int pageSize,
+     string? search,
+    string? status,
+    string? role);
 
 }

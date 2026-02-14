@@ -3,10 +3,13 @@ using CRM_Backend.Domain.Entities;
 using CRM_Backend.DTOs.Auth;
 using CRM_Backend.Exceptions;
 using CRM_Backend.Repositories.Interfaces;
+using CRM_Backend.Security.Jwt;
 using CRM_Backend.Security.Tokens;
 using CRM_Backend.Services.Interfaces;
+using Microsoft.Extensions.Options;
 using System.Security.Cryptography;
 using System.Text;
+
 
 namespace CRM_Backend.Services.Implementations;
 
@@ -22,6 +25,8 @@ public class AuthService : IAuthService
     private readonly IUserRoleRepository _userRoleRepository;
     private readonly IRefreshTokenRepository _refreshTokenRepository;
     private readonly INotificationService _notificationService;
+    private readonly JwtSettings _jwtSettings;
+
 
     public AuthService(
         IUserRepository userRepository,
@@ -33,7 +38,8 @@ public class AuthService : IAuthService
         IUserRoleRepository userRoleRepository,
         IRefreshTokenRepository refreshTokenRepository,
         INotificationService notificationService,
-        IConfiguration configuration)
+        IConfiguration configuration,
+          IOptions<JwtSettings> jwtOptions)
     {
         _userRepository = userRepository;
         _passwordRepository = passwordRepository;
@@ -45,6 +51,7 @@ public class AuthService : IAuthService
         _refreshTokenRepository = refreshTokenRepository;
         _notificationService = notificationService;
         _configuration = configuration;
+        _jwtSettings = jwtOptions.Value;
     }
 
     // --------------------------------------------------
@@ -111,7 +118,7 @@ public class AuthService : IAuthService
         {
             UserId = user.UserId,
             TokenHash = hashedRefreshToken,
-            ExpiresAt = DateTime.UtcNow.AddDays(7),
+            ExpiresAt = DateTime.UtcNow.AddDays(_jwtSettings.RefreshTokenDays),
             CreatedAt = DateTime.UtcNow,
             IpAddress = ipAddress,
             UserAgent = userAgent,

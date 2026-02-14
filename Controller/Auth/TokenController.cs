@@ -1,9 +1,10 @@
-﻿
-
+﻿using CRM_Backend.Domain.Entities;
 using CRM_Backend.Repositories.Interfaces;
 using CRM_Backend.Security.Tokens;
 using CRM_Backend.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace CRM_Backend.Controller.Auth;
 
@@ -40,19 +41,15 @@ public class TokenController : ControllerBase
         var tokenHash = RefreshTokenGenerator.HashToken(refreshToken);
         var stored = await _refreshRepo.GetByHashAsync(tokenHash);
 
-        if (stored == null)
-            return Unauthorized("Invalid refresh token");
+        if (stored == null || stored.ExpiresAt < DateTime.UtcNow)
+            return Unauthorized("Invalid or expired refresh token");
 
-        // 🔒 Device binding (Zoho-style)
-        var fingerprint =
-            $"{Request.HttpContext.Connection.RemoteIpAddress}:{Request.Headers.UserAgent}"
-            .GetHashCode()
-            .ToString();
+        var fingerprint = GenerateDeviceFingerprint();
 
         if (stored.DeviceFingerprint != fingerprint)
             return Unauthorized("Device mismatch");
 
-        // 🔁 Rotate refresh token
+        // 🔁 Rotate old refresh token
         await _refreshRepo.RevokeAsync(stored.RefreshTokenId);
 
         var user = await _userRepo.GetByIdAsync(stored.UserId);
@@ -62,16 +59,42 @@ public class TokenController : ControllerBase
         var roles = await _userRoleRepo.GetRoleCodesByUserIdAsync(user.UserId);
         var permissions = await _userRoleRepo.GetPermissionCodesByUserIdAsync(user.UserId);
 
-        // ✅ JWT derives password reset flags internally
         var newAccessToken = _jwtService.GenerateAccessToken(
             user,
             roles,
             permissions
         );
 
+        // ✅ Generate NEW refresh token
+        var rawRefreshToken = RefreshTokenGenerator.GenerateToken();
+        var hashedRefreshToken = RefreshTokenGenerator.HashToken(rawRefreshToken);
+
+        await _refreshRepo.AddAsync(new RefreshToken
+        {
+            UserId = user.UserId,
+            TokenHash = hashedRefreshToken,
+            ExpiresAt = DateTime.UtcNow.AddDays(7),
+            CreatedAt = DateTime.UtcNow,
+            IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
+            UserAgent = Request.Headers.UserAgent.ToString(),
+            DeviceFingerprint = fingerprint
+        });
+
         return Ok(new
         {
-            accessToken = newAccessToken
+            accessToken = newAccessToken,
+            refreshToken = rawRefreshToken
         });
+    }
+
+    // --------------------------------------------------
+    // DEVICE FINGERPRINT (Stable + Secure)
+    // --------------------------------------------------
+    private string GenerateDeviceFingerprint()
+    {
+        var raw = $"{HttpContext.Connection.RemoteIpAddress}:{Request.Headers.UserAgent}";
+        using var sha = SHA256.Create();
+        var hash = sha.ComputeHash(Encoding.UTF8.GetBytes(raw));
+        return Convert.ToHexString(hash);
     }
 }

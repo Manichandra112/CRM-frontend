@@ -17,9 +17,8 @@ public class EmployeesController : ControllerBase
     {
         _service = service;
     }
-
     [HttpGet]
-    [HasPermission("USER_VIEW")]
+    [HasPermission("EMPLOYEE_VIEW")]
     public async Task<IActionResult> Get([FromQuery] EmployeeFilterDto filter)
     {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
@@ -44,5 +43,6 @@ public class EmployeesController : ControllerBase
 
         return Ok(result);
     }
+
 }
 
