@@ -4,14 +4,14 @@ namespace CRM_Backend.Services.Interfaces;
 
 public interface IUserManagementService
 {
- 
+
     Task<long> CreateUserAsync(CreateUserDto dto, long createdBy);
     Task UpdateUserAsync(long userId, UpdateUserDto dto, long updatedBy);
 
-    Task AssignManagerAsync(long userId, long managerId);
+    Task AssignManagerAsync(long userId, long managerId, long performedBy);
     Task<List<UserLookupDto>> GetUsersAsync();
     Task<List<UserLookupDto>> GetUsersByRoleAsync(string roleCode);
-    Task<List<UserLookupDto>> GetEmployeesByDomainAsync(string domainCode);   
+    Task<List<UserLookupDto>> GetEmployeesByDomainAsync(string domainCode);
     Task<List<UserLookupDto>> GetManagersByDomainAsync(string domainCode);
     Task<List<UserLookupDto>> GetAllManagersAsync();
     Task<object> GetUserDetailsAsync(long userId);
@@ -21,8 +21,8 @@ public interface IUserManagementService
     Task<List<UserRoleDto>> GetUserRolesAsync(long userId);
     Task LockUserAsync(long userId, string reason, long lockedBy);
     Task UnlockUserAsync(long userId, long unlockedBy);
-
-    Task<List<AdminUserListDto>> GetAdminUsersByDomainAsync(
+    Task UpdateSelfProfileAsync(long userId, UpdateSelfProfileDto dto);
+    Task<List<UserListDto>> GetAdminUsersByDomainAsync(
         string domainCode,
         string? search,
         string? status,

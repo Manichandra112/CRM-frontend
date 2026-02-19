@@ -64,11 +64,11 @@ namespace CRM_Backend.Services.Implementations
 
                 await client.SendMailAsync(message);
             }
-            catch (SmtpException ex)
+            catch (SmtpException)
             {
-                throw new InternalServerException(
-                    $"Email sending failed: {ex.Message}");
+                throw new InternalServerException("Failed to send reset email");
             }
+
         }
     }
 }

@@ -1,11 +1,15 @@
-﻿namespace CRM_Backend.DTOs.Users
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace CRM_Backend.DTOs.Users;
+
+public class UserProfileDto
 {
-    public class UserProfileDto
-    {
-        public string? FirstName { get; set; }
-        public string? LastName { get; set; }
-        public string? MobileNumber { get; set; }
-        public string? Department { get; set; }
-        public string? Designation { get; set; }
-    }
+    [StringLength(100)]
+    public string? FirstName { get; set; }
+
+    [StringLength(100)]
+    public string? LastName { get; set; }
+
+    [StringLength(20)]
+    public string? MobileNumber { get; set; }
 }

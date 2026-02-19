@@ -4,5 +4,5 @@ namespace CRM_Backend.Services.Interfaces;
 
 public interface IAdminUserSecurityService
 {
-    Task<AdminUserSecurityDto> GetUserSecurityAsync(long userId);
+    Task<UserSecurityDto> GetUserSecurityAsync(long userId);
 }

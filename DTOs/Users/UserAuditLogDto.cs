@@ -1,6 +1,6 @@
 ﻿namespace CRM_Backend.DTOs.Users
 {
-    public class AdminUserAuditLogDto
+    public class UserAuditLogDto
     {
         public string Action { get; set; } = null!;
         public string Module { get; set; } = null!;

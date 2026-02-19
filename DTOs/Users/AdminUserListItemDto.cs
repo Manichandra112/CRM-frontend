@@ -8,6 +8,8 @@ public class AdminUserListItemDto
     public string Email { get; set; } = null!;
     public string? Department { get; set; }
     public string? Designation { get; set; }
+    public string? AssignedBranch { get; set; }
+
     public string AccountStatus { get; set; } = null!;
     public string? ManagerName { get; set; }
     public List<string> Roles { get; set; } = new();

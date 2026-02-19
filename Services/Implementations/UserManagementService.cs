@@ -63,8 +63,6 @@ public class UserManagementService : IUserManagementService
             {
                 Username = dto.Username,
                 Email = dto.Email,
-                Department = dto.Profile.Department,
-                Designation = dto.Profile.Designation,
                 AccountStatus = "ACTIVE",
                 DomainId = domain.DomainId,
                 CreatedAt = DateTime.UtcNow,
@@ -139,22 +137,60 @@ public class UserManagementService : IUserManagementService
     }
 
 
+
+    public async Task UpdateSelfProfileAsync(long userId, UpdateSelfProfileDto dto)
+    {
+        var user = await _context.Users
+            .Include(u => u.Profile)
+            .FirstOrDefaultAsync(u => u.UserId == userId);
+
+        if (user == null)
+            throw new NotFoundException("User not found.");
+
+        if (user.Profile == null)
+        {
+            user.Profile = new UserProfile
+            {
+                UserId = userId
+            };
+        }
+
+        user.Profile.FirstName = dto.FirstName;
+        user.Profile.LastName = dto.LastName;
+        user.Profile.Gender = dto.Gender;
+        user.Profile.MobileNumber = dto.MobileNumber;
+        user.Profile.AddressLine1 = dto.AddressLine1;
+        user.Profile.City = dto.City;
+        user.Profile.State = dto.State;
+        user.Profile.Country = dto.Country;
+        user.Profile.PostalCode = dto.PostalCode;
+        user.Profile.LanguagePreference = dto.LanguagePreference;
+        user.Profile.Timezone = dto.Timezone;
+
+        user.UpdatedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+    }
+
+
+
     // ✅ SINGLE, CORRECT METHOD — NO DUPLICATES
-    public async Task AssignManagerAsync(long userId, long managerId)
+    public async Task AssignManagerAsync(long userId, long managerId, long performedBy)
     {
         if (userId == managerId)
             throw new BusinessRuleException("A user cannot be assigned as their own manager.");
 
         var user = await _context.Users.FindAsync(userId)
-?? throw new NotFoundException($"User {userId} not found.");
+            ?? throw new NotFoundException($"User {userId} not found.");
 
         var manager = await _context.Users.FindAsync(managerId)
-?? throw new NotFoundException($"Manager {managerId} not found.");
+            ?? throw new NotFoundException($"Manager {managerId} not found.");
 
         user.ManagerId = managerId;
+
         _context.AuditLogs.Add(new AuditLog
         {
-            ActorUserId = managerId,
+            ActorUserId = performedBy,   // ✅ Correct actor
             TargetUserId = userId,
             Action = "ASSIGN_MANAGER",
             Module = "USERS",
@@ -162,12 +198,12 @@ public class UserManagementService : IUserManagementService
             {
                 managerId = managerId
             }),
-
             CreatedAt = DateTime.UtcNow
         });
 
         await _context.SaveChangesAsync();
     }
+
 
     public async Task<List<UserLookupDto>> GetUsersByRoleAsync(string roleCode)
     {
@@ -214,25 +250,34 @@ public class UserManagementService : IUserManagementService
     // --------------------------------------------------
     // 🔹 GET MANAGERS BY DOMAIN (permission-based)
     // --------------------------------------------------
-    public async Task<List<UserLookupDto>> GetManagersByDomainAsync(string domainCode)
+    public async Task<List<UserLookupDto>> GetManagersByDomainAsync(string? domainCode)
     {
-        var domain = await _domains.GetByCodeAsync(domainCode)
-?? throw new NotFoundException($"Domain '{domainCode}' not found.");
-
-        return await _context.Users
+        var query = _context.Users
             .Where(u =>
                 u.AccountStatus == "ACTIVE" &&
-                u.DomainId == domain.DomainId &&
                 u.UserRoles.Any(ur => ur.Role.RoleCode.EndsWith("_MANAGER"))
-            )
+            );
+
+        if (!string.IsNullOrWhiteSpace(domainCode))
+        {
+            var domain = await _domains.GetByCodeAsync(domainCode)
+                ?? throw new NotFoundException($"Domain '{domainCode}' not found.");
+
+            query = query.Where(u => u.DomainId == domain.DomainId);
+        }
+
+        return await query
             .Select(u => new UserLookupDto
             {
                 UserId = u.UserId,
-                Name = u.Profile.FirstName + " " + u.Profile.LastName
+                Name = u.Profile.FirstName + " " + u.Profile.LastName,
+                DomainCode = u.Domain.DomainCode   // 🔥 ADD THIS
             })
             .OrderBy(u => u.Name)
             .ToListAsync();
     }
+
+
 
 
 
@@ -493,7 +538,7 @@ public class UserManagementService : IUserManagementService
 
 
 
-    public async Task<List<AdminUserListDto>> GetAdminUsersByDomainAsync(
+    public async Task<List<UserListDto>> GetAdminUsersByDomainAsync(
        string domainCode,
        string? search,
        string? status,
@@ -535,7 +580,7 @@ public class UserManagementService : IUserManagementService
         }
 
         return await query
-            .Select(u => new AdminUserListDto
+            .Select(u => new UserListDto
             {
                 UserId = u.UserId,
                 Username = u.Username,
@@ -543,6 +588,7 @@ public class UserManagementService : IUserManagementService
                 Department = u.Department,
                 Designation = u.Designation,
                 AccountStatus = u.AccountStatus,
+                AssignedBranch = u.AssignedBranch,
 
                 ManagerName = u.ManagerId != null
                     ? _context.Users
@@ -575,12 +621,8 @@ public class UserManagementService : IUserManagementService
             .ToListAsync();
     }
 
-
-
-
-
-
-
-
-
 }
+
+
+
+

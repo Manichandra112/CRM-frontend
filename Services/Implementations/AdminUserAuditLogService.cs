@@ -55,7 +55,7 @@ public class AdminUserAuditLogService : IAdminUserAuditLogService
             ?? throw new ArgumentNullException(nameof(context));
     }
 
-    public async Task<List<AdminUserAuditLogDto>> GetUserAuditLogsAsync(long userId)
+    public async Task<List<UserAuditLogDto>> GetUserAuditLogsAsync(long userId)
     {
         // 1️⃣ Validate input
         if (userId <= 0)
@@ -77,7 +77,7 @@ public class AdminUserAuditLogService : IAdminUserAuditLogService
             from actor in actorGroup.DefaultIfEmpty()
             where a.TargetUserId == userId
             orderby a.CreatedAt descending
-            select new AdminUserAuditLogDto
+            select new UserAuditLogDto
             {
                 Action = a.Action,
                 Module = a.Module,

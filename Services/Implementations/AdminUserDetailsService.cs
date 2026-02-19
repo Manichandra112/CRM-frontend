@@ -16,7 +16,7 @@ public class AdminUserDetailsService : IAdminUserDetailsService
             ?? throw new ArgumentNullException(nameof(context));
     }
 
-    public async Task<AdminUserDetailsDto> GetUserDetailsAsync(long userId)
+    public async Task<UserDetailsDto> GetUserDetailsAsync(long userId)
     {
         if (userId <= 0)
             throw new ValidationException("Invalid user id.");
@@ -24,7 +24,7 @@ public class AdminUserDetailsService : IAdminUserDetailsService
         var user = await _context.Users
             .AsNoTracking()
             .Where(u => u.UserId == userId && u.DeletedAt == null)
-            .Select(u => new AdminUserDetailsDto
+            .Select(u => new UserDetailsDto
             {
                 UserId = u.UserId,
                 Username = u.Username,

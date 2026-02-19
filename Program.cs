@@ -16,6 +16,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.IdentityModel.Tokens.Jwt;
+using System.Reflection;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -34,8 +35,17 @@ builder.Services.AddSwaggerGen(c =>
     c.SwaggerDoc("v1", new OpenApiInfo
     {
         Title = "CRM_Backend",
-        Version = "v1"
+        Version = "v1",
+        Description = "Authentication, Authorization and User Management API for CRM system",
+        Contact = new OpenApiContact
+        {
+            Name = "CRM Backend Team",
+            Email = "support@yourdomain.com"
+        }
     });
+    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    c.IncludeXmlComments(xmlPath);
 
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
@@ -193,6 +203,7 @@ builder.Services.AddScoped<IAdminUserAuditLogService, AdminUserAuditLogService>(
 builder.Services.AddScoped<IPermissionService, PermissionService>();
 builder.Services.AddScoped<IAccessService, AccessService>();
 builder.Services.AddScoped<IBootstrapSeeder, BootstrapSeeder>();
+builder.Services.AddScoped<IUserSelfService, UserSelfService>();
 
 // Repositories
 builder.Services.AddScoped<IUserRepository, UserRepository>();

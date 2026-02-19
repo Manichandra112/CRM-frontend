@@ -4,5 +4,5 @@ namespace CRM_Backend.Services.Interfaces;
 
 public interface IAdminUserAuditLogService
 {
-    Task<List<AdminUserAuditLogDto>> GetUserAuditLogsAsync(long userId);
+    Task<List<UserAuditLogDto>> GetUserAuditLogsAsync(long userId);
 }

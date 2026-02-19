@@ -42,10 +42,27 @@ public class PermissionService : IPermissionService
         );
     }
 
-    public async Task<List<Permission>> GetAllAsync()
+    //public async Task<List<Permission>> GetAllAsync()
+    //{
+    //    return await _permissions.GetAllAsync();
+    //}
+
+    public async Task<List<PermissionResponseDto>> GetAllAsync()
     {
-        return await _permissions.GetAllAsync();
+        var permissions = await _permissions.GetAllAsync();
+
+        return permissions.Select(p => new PermissionResponseDto
+        {
+            PermissionId = p.PermissionId,
+            PermissionCode = p.PermissionCode,
+            Description = p.Description,
+            Module = p.Module,
+            Active = p.Active,
+            CreatedAt = p.CreatedAt,
+            UpdatedAt = p.UpdatedAt
+        }).ToList();
     }
+
 
     public async Task UpdateAsync(long id, UpdatePermissionDto dto)
     {

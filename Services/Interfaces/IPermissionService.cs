@@ -6,7 +6,10 @@ namespace CRM_Backend.Services.Interfaces;
 public interface IPermissionService
 {
     Task<long> CreateAsync(CreatePermissionDto dto);
-    Task<List<Permission>> GetAllAsync();
+    //Task<List<Permission>> GetAllAsync();
+
+    Task<List<PermissionResponseDto>> GetAllAsync();
+
 
     Task UpdateAsync(long id, UpdatePermissionDto dto);
 }

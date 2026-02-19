@@ -1,6 +1,6 @@
 ﻿namespace CRM_Backend.DTOs.Users
 {
-    public class AdminUserDetailsDto
+    public class UserDetailsDto
     {
         public long UserId { get; set; }
         public string Username { get; set; } = null!;

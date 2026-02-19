@@ -57,7 +57,7 @@ public class AdminUserSecurityService : IAdminUserSecurityService
             ?? throw new ArgumentNullException(nameof(context));
     }
 
-    public async Task<AdminUserSecurityDto> GetUserSecurityAsync(long userId)
+    public async Task<UserSecurityDto> GetUserSecurityAsync(long userId)
     {
         if (userId <= 0)
             throw new ValidationException("Invalid user id.");
@@ -65,7 +65,7 @@ public class AdminUserSecurityService : IAdminUserSecurityService
         var security = await _context.UserSecurity
             .AsNoTracking()
             .Where(s => s.UserId == userId)
-            .Select(s => new AdminUserSecurityDto
+            .Select(s => new UserSecurityDto
             {
                 ForcePasswordReset = s.ForcePasswordReset,
                 MfaEnabled = s.MfaEnabled,

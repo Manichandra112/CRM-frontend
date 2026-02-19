@@ -1,6 +1,6 @@
 ﻿namespace CRM_Backend.DTOs.Users;
 
-public class AdminUserListDto
+public class UserListDto
 {
     public long UserId { get; set; }
     public string Username { get; set; } = null!;
@@ -12,6 +12,9 @@ public class AdminUserListDto
     public string AccountStatus { get; set; } = null!;
 
     public string? ManagerName { get; set; }
+
+    public string? AssignedBranch { get; set; }
+
 
     public List<string> Roles { get; set; } = new();
 }
