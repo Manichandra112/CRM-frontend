@@ -171,11 +171,18 @@ public class AuthService : IAuthService
     // --------------------------------------------------
     public async Task ForgotPasswordAsync(string email)
     {
+<<<<<<< HEAD
         email = email.Trim().ToLowerInvariant();
 
         var user = await _userRepository.GetByEmailAsync(email);
         
         if (user == null)
+=======
+ email = email.Trim().ToLowerInvariant();
+
+ var user = await _userRepository.GetByEmailAsync(email);
+         if (user == null)
+>>>>>>> 310f9d3447d628a3f0e7600603a982d5283e1bd7
             return;
 
         var rawToken = Guid.NewGuid().ToString("N");
