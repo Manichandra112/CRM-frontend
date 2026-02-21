@@ -4,9 +4,10 @@ namespace CRM_Backend.Services.Interfaces;
 
 public interface IUserManagementService
 {
+    
 
     Task<long> CreateUserAsync(CreateUserDto dto, long createdBy);
-    Task UpdateUserAsync(long userId, UpdateUserDto dto, long updatedBy);
+    //Task UpdateUserAsync(long userId, UpdateUserDto dto, long updatedBy);
 
     Task AssignManagerAsync(long userId, long managerId, long performedBy);
     Task<List<UserLookupDto>> GetUsersAsync();
@@ -28,4 +29,13 @@ public interface IUserManagementService
         string? status,
         string? roleCode
     );
+
+
+    Task UpdateUserOrganizationAsync(long userId, UpdateUserOrganizationDto dto, long actorId);
+    Task UpdateUserProfileAsync(long userId, UpdateUserProfileByAdminDto dto, long actorId);
+
+
+    Task UpdateUserEmailAsync(long userId, string newEmail, long updatedBy);
+    Task UpdateUsernameAsync(long userId, string newUsername, long updatedBy);
+    Task UpdateUserDomainAsync(long userId, string domainCode, long updatedBy);
 }

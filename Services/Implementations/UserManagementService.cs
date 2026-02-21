@@ -381,102 +381,102 @@ public class UserManagementService : IUserManagementService
             })
             .ToListAsync();
     }
-    public async Task UpdateUserAsync(long userId, UpdateUserDto dto, long updatedBy)
-    {
-        var user = await _context.Users
-            .Include(u => u.Profile)
-            .FirstOrDefaultAsync(u => u.UserId == userId)
-            ?? throw new NotFoundException($"User {userId} not found.");
+    //public async Task UpdateUserAsync(long userId, UpdateUserDto dto, long updatedBy)
+    //{
+    //    var user = await _context.Users
+    //        .Include(u => u.Profile)
+    //        .FirstOrDefaultAsync(u => u.UserId == userId)
+    //        ?? throw new NotFoundException($"User {userId} not found.");
 
 
-        // Track what changed (important for audit)
-        var changes = new List<string>();
+    //    // Track what changed (important for audit)
+    //    var changes = new List<string>();
 
-        // ---------------- USER FIELDS ----------------
-        if (dto.Department != null && dto.Department != user.Department)
-        {
-            changes.Add($"Department: {user.Department} → {dto.Department}");
-            user.Department = dto.Department;
-        }
+    //    // ---------------- USER FIELDS ----------------
+    //    if (dto.Department != null && dto.Department != user.Department)
+    //    {
+    //        changes.Add($"Department: {user.Department} → {dto.Department}");
+    //        user.Department = dto.Department;
+    //    }
 
-        if (dto.Designation != null && dto.Designation != user.Designation)
-        {
-            changes.Add($"Designation: {user.Designation} → {dto.Designation}");
-            user.Designation = dto.Designation;
-        }
+    //    if (dto.Designation != null && dto.Designation != user.Designation)
+    //    {
+    //        changes.Add($"Designation: {user.Designation} → {dto.Designation}");
+    //        user.Designation = dto.Designation;
+    //    }
 
-        if (dto.EmploymentType != null && dto.EmploymentType != user.EmploymentType)
-        {
-            changes.Add($"EmploymentType: {user.EmploymentType} → {dto.EmploymentType}");
-            user.EmploymentType = dto.EmploymentType;
-        }
+    //    if (dto.EmploymentType != null && dto.EmploymentType != user.EmploymentType)
+    //    {
+    //        changes.Add($"EmploymentType: {user.EmploymentType} → {dto.EmploymentType}");
+    //        user.EmploymentType = dto.EmploymentType;
+    //    }
 
-        if (dto.WorkShift != null && dto.WorkShift != user.WorkShift)
-        {
-            changes.Add($"WorkShift: {user.WorkShift} → {dto.WorkShift}");
-            user.WorkShift = dto.WorkShift;
-        }
+    //    if (dto.WorkShift != null && dto.WorkShift != user.WorkShift)
+    //    {
+    //        changes.Add($"WorkShift: {user.WorkShift} → {dto.WorkShift}");
+    //        user.WorkShift = dto.WorkShift;
+    //    }
 
-        if (dto.AssignedRegion != null && dto.AssignedRegion != user.AssignedRegion)
-        {
-            changes.Add($"AssignedRegion: {user.AssignedRegion} → {dto.AssignedRegion}");
-            user.AssignedRegion = dto.AssignedRegion;
-        }
+    //    if (dto.AssignedRegion != null && dto.AssignedRegion != user.AssignedRegion)
+    //    {
+    //        changes.Add($"AssignedRegion: {user.AssignedRegion} → {dto.AssignedRegion}");
+    //        user.AssignedRegion = dto.AssignedRegion;
+    //    }
 
-        if (dto.AssignedBranch != null && dto.AssignedBranch != user.AssignedBranch)
-        {
-            changes.Add($"AssignedBranch: {user.AssignedBranch} → {dto.AssignedBranch}");
-            user.AssignedBranch = dto.AssignedBranch;
-        }
+    //    if (dto.AssignedBranch != null && dto.AssignedBranch != user.AssignedBranch)
+    //    {
+    //        changes.Add($"AssignedBranch: {user.AssignedBranch} → {dto.AssignedBranch}");
+    //        user.AssignedBranch = dto.AssignedBranch;
+    //    }
 
-        if (dto.Remarks != null && dto.Remarks != user.Remarks)
-        {
-            changes.Add("Remarks updated");
-            user.Remarks = dto.Remarks;
-        }
+    //    if (dto.Remarks != null && dto.Remarks != user.Remarks)
+    //    {
+    //        changes.Add("Remarks updated");
+    //        user.Remarks = dto.Remarks;
+    //    }
 
-        // ---------------- PROFILE FIELDS ----------------
-        if (dto.FirstName != null && dto.FirstName != user.Profile.FirstName)
-        {
-            changes.Add($"FirstName: {user.Profile.FirstName} → {dto.FirstName}");
-            user.Profile.FirstName = dto.FirstName;
-        }
+    //    // ---------------- PROFILE FIELDS ----------------
+    //    if (dto.FirstName != null && dto.FirstName != user.Profile.FirstName)
+    //    {
+    //        changes.Add($"FirstName: {user.Profile.FirstName} → {dto.FirstName}");
+    //        user.Profile.FirstName = dto.FirstName;
+    //    }
 
-        if (dto.LastName != null && dto.LastName != user.Profile.LastName)
-        {
-            changes.Add($"LastName: {user.Profile.LastName} → {dto.LastName}");
-            user.Profile.LastName = dto.LastName;
-        }
+    //    if (dto.LastName != null && dto.LastName != user.Profile.LastName)
+    //    {
+    //        changes.Add($"LastName: {user.Profile.LastName} → {dto.LastName}");
+    //        user.Profile.LastName = dto.LastName;
+    //    }
 
-        if (dto.MobileNumber != null && dto.MobileNumber != user.Profile.MobileNumber)
-        {
-            changes.Add($"MobileNumber updated");
-            user.Profile.MobileNumber = dto.MobileNumber;
-        }
+    //    if (dto.MobileNumber != null && dto.MobileNumber != user.Profile.MobileNumber)
+    //    {
+    //        changes.Add($"MobileNumber updated");
+    //        user.Profile.MobileNumber = dto.MobileNumber;
+    //    }
 
-        user.UpdatedAt = DateTime.UtcNow;
-        user.UpdatedBy = updatedBy;
+    //    user.UpdatedAt = DateTime.UtcNow;
+    //    user.UpdatedBy = updatedBy;
 
-        // ---------------- AUDIT LOG ----------------
-        if (changes.Any())
-        {
-            _context.AuditLogs.Add(new AuditLog
-            {
-                ActorUserId = updatedBy,
-                TargetUserId = userId,
-                Action = "USER_UPDATE",
-                Module = "USERS",
-                Metadata = JsonSerializer.Serialize(new
-                {
-                    changes = changes
-                }),
+    //    // ---------------- AUDIT LOG ----------------
+    //    if (changes.Any())
+    //    {
+    //        _context.AuditLogs.Add(new AuditLog
+    //        {
+    //            ActorUserId = updatedBy,
+    //            TargetUserId = userId,
+    //            Action = "USER_UPDATE",
+    //            Module = "USERS",
+    //            Metadata = JsonSerializer.Serialize(new
+    //            {
+    //                changes = changes
+    //            }),
 
-                CreatedAt = DateTime.UtcNow
-            });
-        }
+    //            CreatedAt = DateTime.UtcNow
+    //        });
+    //    }
 
-        await _context.SaveChangesAsync();
-    }
+    //    await _context.SaveChangesAsync();
+    //}
 
 
 
@@ -619,6 +619,333 @@ public class UserManagementService : IUserManagementService
             })
             .OrderBy(u => u.Name)
             .ToListAsync();
+    }
+
+    public async Task UpdateUserOrganizationAsync(
+    long userId,
+    UpdateUserOrganizationDto dto,
+    long updatedBy)
+    {
+        var user = await _context.Users
+            .FirstOrDefaultAsync(u => u.UserId == userId)
+            ?? throw new NotFoundException($"User {userId} not found.");
+
+        var changes = new List<string>();
+
+        if (dto.Department != null && dto.Department != user.Department)
+        {
+            changes.Add($"Department: {user.Department} → {dto.Department}");
+            user.Department = dto.Department;
+        }
+
+        if (dto.Designation != null && dto.Designation != user.Designation)
+        {
+            changes.Add($"Designation: {user.Designation} → {dto.Designation}");
+            user.Designation = dto.Designation;
+        }
+
+        if (dto.EmploymentType != null && dto.EmploymentType != user.EmploymentType)
+        {
+            changes.Add($"EmploymentType: {user.EmploymentType} → {dto.EmploymentType}");
+            user.EmploymentType = dto.EmploymentType;
+        }
+
+        if (dto.WorkShift != null && dto.WorkShift != user.WorkShift)
+        {
+            changes.Add($"WorkShift: {user.WorkShift} → {dto.WorkShift}");
+            user.WorkShift = dto.WorkShift;
+        }
+
+        if (dto.AssignedRegion != null && dto.AssignedRegion != user.AssignedRegion)
+        {
+            changes.Add($"AssignedRegion: {user.AssignedRegion} → {dto.AssignedRegion}");
+            user.AssignedRegion = dto.AssignedRegion;
+        }
+
+        if (dto.AssignedBranch != null && dto.AssignedBranch != user.AssignedBranch)
+        {
+            changes.Add($"AssignedBranch: {user.AssignedBranch} → {dto.AssignedBranch}");
+            user.AssignedBranch = dto.AssignedBranch;
+        }
+
+        if (dto.Remarks != null && dto.Remarks != user.Remarks)
+        {
+            changes.Add("Remarks updated");
+            user.Remarks = dto.Remarks;
+        }
+
+
+        user.UpdatedAt = DateTime.UtcNow;
+        user.UpdatedBy = updatedBy;
+
+        if (changes.Any())
+        {
+            _context.AuditLogs.Add(new AuditLog
+            {
+                ActorUserId = updatedBy,
+                TargetUserId = userId,
+                Action = "USER_UPDATE_ORGANIZATION",
+                Module = "USERS",
+                Metadata = JsonSerializer.Serialize(new { changes }),
+                CreatedAt = DateTime.UtcNow
+            });
+        }
+
+        await _context.SaveChangesAsync();
+    }
+    public async Task UpdateUserProfileAsync(
+    long userId,
+    UpdateUserProfileByAdminDto dto,
+    long updatedBy)
+    {
+        var user = await _context.Users
+            .Include(u => u.Profile)
+            .FirstOrDefaultAsync(u => u.UserId == userId)
+            ?? throw new NotFoundException($"User {userId} not found.");
+
+        if (user.Profile == null)
+        {
+            user.Profile = new UserProfile
+            {
+                UserId = userId
+            };
+        }
+
+        var changes = new List<string>();
+
+        if (dto.FirstName != null &&
+            dto.FirstName != user.Profile.FirstName)
+        {
+            changes.Add($"FirstName: {user.Profile.FirstName} → {dto.FirstName}");
+            user.Profile.FirstName = dto.FirstName;
+        }
+
+        if (dto.LastName != null &&
+            dto.LastName != user.Profile.LastName)
+        {
+            changes.Add($"LastName: {user.Profile.LastName} → {dto.LastName}");
+            user.Profile.LastName = dto.LastName;
+        }
+
+        if (dto.Gender != null &&
+            dto.Gender != user.Profile.Gender)
+        {
+            changes.Add($"Gender updated");
+            user.Profile.Gender = dto.Gender;
+        }
+
+        if (dto.MobileNumber != null &&
+            dto.MobileNumber != user.Profile.MobileNumber)
+        {
+            changes.Add("MobileNumber updated");
+            user.Profile.MobileNumber = dto.MobileNumber;
+        }
+
+        user.UpdatedAt = DateTime.UtcNow;
+        user.UpdatedBy = updatedBy;
+
+        if (changes.Any())
+        {
+            _context.AuditLogs.Add(new AuditLog
+            {
+                ActorUserId = updatedBy,
+                TargetUserId = userId,
+                Action = "USER_UPDATE_PROFILE",
+                Module = "USERS",
+                Metadata = JsonSerializer.Serialize(new { changes }),
+                CreatedAt = DateTime.UtcNow
+            });
+        }
+
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task UpdateUserEmailAsync(
+    long userId,
+    string newEmail,
+    long updatedBy)
+    {
+        if (string.IsNullOrWhiteSpace(newEmail))
+            throw new ValidationException("Email is required.");
+
+        var user = await _context.Users
+            .FirstOrDefaultAsync(u => u.UserId == userId)
+            ?? throw new NotFoundException($"User {userId} not found.");
+
+        if (user.Email == newEmail)
+            return;
+
+        var emailExists = await _context.Users
+            .AnyAsync(u => u.Email == newEmail && u.UserId != userId);
+
+        if (emailExists)
+            throw new ConflictException("Email is already in use.");
+
+        var oldEmail = user.Email;
+        user.Email = newEmail;
+        user.UpdatedAt = DateTime.UtcNow;
+        user.UpdatedBy = updatedBy;
+
+        // Invalidate refresh tokens
+        var tokens = await _context.RefreshTokens
+            .Where(t => t.UserId == userId && t.RevokedAt == null)
+            .ToListAsync();
+
+        foreach (var token in tokens)
+            token.RevokedAt = DateTime.UtcNow;
+
+        _context.AuditLogs.Add(new AuditLog
+        {
+            ActorUserId = updatedBy,
+            TargetUserId = userId,
+            Action = "USER_UPDATE_EMAIL",
+            Module = "USERS",
+            Metadata = JsonSerializer.Serialize(new
+            {
+                oldEmail,
+                newEmail
+            }),
+            CreatedAt = DateTime.UtcNow
+        });
+
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task UpdateUsernameAsync(
+    long userId,
+    string newUsername,
+    long updatedBy)
+    {
+        if (string.IsNullOrWhiteSpace(newUsername))
+            throw new ValidationException("Username is required.");
+
+        var user = await _context.Users
+            .FirstOrDefaultAsync(u => u.UserId == userId)
+            ?? throw new NotFoundException($"User {userId} not found.");
+
+        if (user.Username == newUsername)
+            return;
+
+        var exists = await _context.Users
+            .AnyAsync(u => u.Username == newUsername && u.UserId != userId);
+
+        if (exists)
+            throw new ConflictException("Username already exists.");
+
+        var oldUsername = user.Username;
+        user.Username = newUsername;
+        user.UpdatedAt = DateTime.UtcNow;
+        user.UpdatedBy = updatedBy;
+
+        _context.AuditLogs.Add(new AuditLog
+        {
+            ActorUserId = updatedBy,
+            TargetUserId = userId,
+            Action = "USER_UPDATE_USERNAME",
+            Module = "USERS",
+            Metadata = JsonSerializer.Serialize(new
+            {
+                oldUsername,
+                newUsername
+            }),
+            CreatedAt = DateTime.UtcNow
+        });
+
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task UpdateUserDomainAsync(
+    long userId,
+    string domainCode,
+    long updatedBy)
+    {
+        var user = await _context.Users
+            .Include(u => u.UserRoles)
+            .FirstOrDefaultAsync(u => u.UserId == userId)
+            ?? throw new NotFoundException($"User {userId} not found.");
+
+        var domain = await _domains.GetByCodeAsync(domainCode)
+            ?? throw new NotFoundException($"Domain '{domainCode}' not found.");
+
+        if (user.DomainId == domain.DomainId)
+            return;
+
+        var oldDomainId = user.DomainId;
+
+        // Remove all roles
+        _context.UserRoles.RemoveRange(user.UserRoles);
+
+        user.DomainId = domain.DomainId;
+        user.UpdatedAt = DateTime.UtcNow;
+        user.UpdatedBy = updatedBy;
+
+        _context.AuditLogs.Add(new AuditLog
+        {
+            ActorUserId = updatedBy,
+            TargetUserId = userId,
+            Action = "USER_UPDATE_DOMAIN",
+            Module = "USERS",
+            Metadata = JsonSerializer.Serialize(new
+            {
+                oldDomainId,
+                newDomainId = domain.DomainId,
+                rolesCleared = true
+            }),
+            CreatedAt = DateTime.UtcNow
+        });
+        
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task UpdateUserStatusAsync(
+    long userId,
+    string newStatus,
+    long updatedBy)
+    {
+        if (string.IsNullOrWhiteSpace(newStatus))
+            throw new ValidationException("Status is required.");
+
+        var allowedStatuses = new[]
+        {
+        Domain.Constants.AccountStatus.ACTIVE,
+        Domain.Constants.AccountStatus.INACTIVE,
+        Domain.Constants.AccountStatus.EXITED
+    };
+
+        if (!allowedStatuses.Contains(newStatus))
+            throw new ValidationException("Invalid account status.");
+
+        var user = await _context.Users
+            .FirstOrDefaultAsync(u => u.UserId == userId)
+            ?? throw new NotFoundException($"User {userId} not found.");
+
+        if (user.AccountStatus == "LOCKED")
+            throw new BusinessRuleException("Locked users must be unlocked first.");
+
+        if (user.AccountStatus == newStatus)
+            return;
+
+        var oldStatus = user.AccountStatus;
+
+        user.AccountStatus = newStatus;
+        user.UpdatedAt = DateTime.UtcNow;
+        user.UpdatedBy = updatedBy;
+
+        _context.AuditLogs.Add(new AuditLog
+        {
+            ActorUserId = updatedBy,
+            TargetUserId = userId,
+            Action = "USER_UPDATE_STATUS",
+            Module = "USERS",
+            Metadata = JsonSerializer.Serialize(new
+            {
+                oldStatus,
+                newStatus
+            }),
+            CreatedAt = DateTime.UtcNow
+        });
+
+        await _context.SaveChangesAsync();
     }
 
 }

@@ -1,9 +1,4 @@
 ﻿
-
-
-
-
-
 using CRM_Backend.DTOs.Users;
 using CRM_Backend.Security.Authorization;
 using CRM_Backend.Security.Extensions;
@@ -52,55 +47,6 @@ public class UsersController : ControllerBase
         _auditLogService = auditLogService;
     }
 
-    // --------------------------------------------------
-    // SELF PROFILE
-    // --------------------------------------------------
-
-    /// <summary>
-    /// Retrieves the authenticated user's profile.
-    /// </summary>
-    /// <remarks>
-    /// Permission Required: USER_VIEW_SELF
-    /// </remarks>
-    //[HttpGet("me")]
-    //[HasPermission("USER_VIEW_SELF")]
-    //[ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
-    //public async Task<IActionResult> GetMyProfile()
-    //{
-    //    var userId = User.GetUserId();
-    //    return Ok(await _detailsService.GetUserDetailsAsync(userId));
-    //}
-
-    /// <summary>
-    /// Retrieves the team members reporting to the authenticated manager.
-    /// </summary>
-    /// <remarks>
-    /// Permission Required: USER_VIEW_TEAM
-    /// </remarks>
-    //[HttpGet("me/team")]
-    //[HasPermission("USER_VIEW_TEAM")]
-    //[ProducesResponseType(typeof(IEnumerable<object>), StatusCodes.Status200OK)]
-    //public async Task<IActionResult> GetMyTeam()
-    //{
-    //    var managerId = User.GetUserId();
-    //    return Ok(await _users.GetTeamByManagerAsync(managerId));
-    //}
-
-    /// <summary>
-    /// Updates the authenticated user's profile.
-    /// </summary>
-    /// <remarks>
-    /// Permission Required: USER_UPDATE_SELF
-    /// </remarks>
-    //[HttpPut("me")]
-    //[HasPermission("USER_UPDATE_SELF")]
-    //[ProducesResponseType(StatusCodes.Status200OK)]
-    //public async Task<IActionResult> UpdateMyProfile([FromBody] UpdateSelfProfileDto dto)
-    //{
-    //    var userId = User.GetUserId();
-    //    await _users.UpdateSelfProfileAsync(userId, dto);
-    //    return Ok();
-    //}
 
     // --------------------------------------------------
     // ADMIN USER OPERATIONS
@@ -185,20 +131,108 @@ public class UsersController : ControllerBase
     }
 
     /// <summary>
-    /// Updates an existing user.
+    /// Updates an existing user.organization details.
     /// </summary>
     /// <remarks>
-    /// Permission Required: USER_UPDATE
+    /// Permission Required: USER_UPDATE_ORGANIZATION
     /// </remarks>
-    [HttpPut("{userId:long}")]
-    [HasPermission("USER_UPDATE")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> UpdateUser(long userId, [FromBody] UpdateUserDto dto)
+
+
+    [HttpPatch("{userId:long}/organization")]
+    [HasPermission("USER_UPDATE_ORGANIZATION")]
+    public async Task<IActionResult> UpdateUserOrganization(
+    long userId,
+    [FromBody] UpdateUserOrganizationDto dto)
     {
         var actorId = User.GetUserId();
-        await _users.UpdateUserAsync(userId, dto, actorId);
+        await _users.UpdateUserOrganizationAsync(userId, dto, actorId);
         return Ok();
     }
+
+    /// <summary>
+    /// Updates an existing user.profile details.
+    /// </summary>
+    /// <remarks>
+    /// Permission Required: USER_UPDATE_PROFILE
+    /// </remarks>
+
+    [HttpPatch("{userId:long}/profile")]
+    [HasPermission("USER_UPDATE_PROFILE")]
+    public async Task<IActionResult> UpdateUserProfile(
+    long userId,
+    [FromBody] UpdateUserProfileByAdminDto dto)
+    {
+        var actorId = User.GetUserId();
+        await _users.UpdateUserProfileAsync(userId, dto, actorId);
+        return Ok();
+    }
+
+
+    [HttpPatch("{userId:long}/status")]
+    [HasPermission("USER_UPDATE_STATUS")]
+    public async Task<IActionResult> UpdateUserStatus(
+    long userId,
+    [FromBody] UpdateUserStatusDto dto)
+    {
+        var actorId = User.GetUserId();
+        await _users.UpdateUserStatusAsync(userId, dto.Status, actorId);
+        return Ok();
+    }
+
+
+    /// <summary>
+    /// Updates an existing user.IDENTITY details.
+    /// </summary>
+    /// <remarks>
+    /// Permission Required: USER_UPDATE_IDENTITY
+    /// </remarks>
+
+
+    [HttpPut("{userId:long}/email")]
+    [HasPermission("USER_UPDATE_IDENTITY")]
+    public async Task<IActionResult> UpdateEmail(
+    long userId,
+    UpdateUserEmailDto dto)
+    {
+        var actorId = User.GetUserId();
+        await _users.UpdateUserEmailAsync(userId, dto.NewEmail, actorId);
+        return Ok();
+    }
+
+    /// <summary>
+    /// Updates a user's username.
+    /// </summary>
+    /// <remarks>
+    /// Permission Required: USER_UPDATE_IDENTITY
+    /// </remarks>
+    [HttpPut("{userId:long}/username")]
+    [HasPermission("USER_UPDATE_IDENTITY")]
+    public async Task<IActionResult> UpdateUsername(
+        long userId,
+        [FromBody] UpdateUsernameDto dto)
+    {
+        var actorId = User.GetUserId();
+        await _users.UpdateUsernameAsync(userId, dto.NewUsername, actorId);
+        return Ok();
+    }
+
+    /// <summary>
+    /// Updates a user's domain.
+    /// </summary>
+    /// <remarks>
+    /// Permission Required: USER_UPDATE_DOMAIN
+    /// </remarks>
+    [HttpPut("{userId:long}/domain")]
+    [HasPermission("USER_UPDATE_DOMAIN")]
+    public async Task<IActionResult> UpdateUserDomain(
+        long userId,
+        [FromBody] UpdateUserDomainDto dto)
+    {
+        var actorId = User.GetUserId();
+        await _users.UpdateUserDomainAsync(userId, dto.DomainCode, actorId);
+        return Ok();
+    }
+
 
     /// <summary>
     /// Assigns a manager to a user.

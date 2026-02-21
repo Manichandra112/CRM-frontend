@@ -205,6 +205,7 @@ builder.Services.AddScoped<IAccessService, AccessService>();
 builder.Services.AddScoped<IBootstrapSeeder, BootstrapSeeder>();
 builder.Services.AddScoped<IUserSelfService, UserSelfService>();
 
+
 // Repositories
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserPasswordRepository, UserPasswordRepository>();

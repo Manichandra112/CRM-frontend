@@ -54,7 +54,7 @@ public class User
     public string? AssignedBranch { get; set; }
 
     [Required, Column("account_status"), MaxLength(30)]
-    public string AccountStatus { get; set; } = "ACTIVE";
+    public AccountStatus AccountStatus { get; set; }
 
     [Column("lock_reason"), MaxLength(255)]
     public string? LockReason { get; set; }

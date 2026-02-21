@@ -172,10 +172,6 @@ public class AuthService : IAuthService
     public async Task ForgotPasswordAsync(string email)
     {
 
-        email = email.Trim().ToLowerInvariant();
-
-  
-
  email = email.Trim().ToLowerInvariant();
 
  var user = await _userRepository.GetByEmailAsync(email);

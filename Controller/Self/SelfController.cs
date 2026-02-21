@@ -11,9 +11,9 @@ namespace CRM_Backend.Controllers.Self
     [ApiController]
     [Authorize]
     [Route("api/self")]
-    //[Authorize(Policy = "ACCOUNT_ACTIVE")]
-    //[Authorize(Policy = "PASSWORD_RESET_COMPLETED")]
-    //[Produces("application/json")]
+    [Authorize(Policy = "ACCOUNT_ACTIVE")]
+    [Authorize(Policy = "PASSWORD_RESET_COMPLETED")]
+    [Produces("application/json")]
     public class SelfController : ControllerBase
     {
         private readonly IUserSelfService _self;
@@ -31,7 +31,7 @@ namespace CRM_Backend.Controllers.Self
         /// Retrieves the authenticated user's profile.
         /// </summary>
         [HttpGet("profile")]
-        //[HasPermission("USER_VIEW_SELF")]
+        [HasPermission("USER_VIEW_SELF")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<IActionResult> GetProfile()
         {
@@ -44,7 +44,7 @@ namespace CRM_Backend.Controllers.Self
         /// Updates the authenticated user's profile information.
         /// </summary>
         [HttpPatch("profile")]
-        //[HasPermission("USER_UPDATE_SELF")]
+        [HasPermission("USER_UPDATE_SELF")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<IActionResult> UpdateProfile([FromBody] UpdateSelfProfileDto dto)
         {
@@ -61,7 +61,7 @@ namespace CRM_Backend.Controllers.Self
         /// Retrieves team members reporting to the authenticated user.
         /// </summary>
         [HttpGet("team")]
-        //[HasPermission("USER_VIEW_TEAM")]
+        [HasPermission("USER_VIEW_TEAM")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<IActionResult> GetMyTeam()
         {
@@ -78,7 +78,7 @@ namespace CRM_Backend.Controllers.Self
         /// Retrieves security overview of the authenticated user.
         /// </summary>
         [HttpGet("security")]
-        //[HasPermission("USER_VIEW_SELF")]
+        [HasPermission("USER_VIEW_SELF")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<IActionResult> GetSecurityOverview()
         {
