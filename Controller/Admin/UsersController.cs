@@ -6,6 +6,9 @@ using CRM_Backend.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Linq;
+using CRM_Backend.Domain.Enums;
+using CRM_Backend.Exceptions;
+
 
 namespace CRM_Backend.Controllers;
 
@@ -168,14 +171,24 @@ public class UsersController : ControllerBase
     }
 
 
+    /// <summary>
+    /// updating the user status
+    /// </summary>
+    /// <remarks>
+    /// Permission Required: USER_UPDATE_STATUs
+    /// 
+    /// </remarks>
+
     [HttpPatch("{userId:long}/status")]
     [HasPermission("USER_UPDATE_STATUS")]
     public async Task<IActionResult> UpdateUserStatus(
-    long userId,
-    [FromBody] UpdateUserStatusDto dto)
+        long userId,
+        [FromBody] UpdateUserStatusDto dto)
     {
         var actorId = User.GetUserId();
+
         await _users.UpdateUserStatusAsync(userId, dto.Status, actorId);
+
         return Ok();
     }
 
@@ -298,24 +311,5 @@ public class UsersController : ControllerBase
         return Ok(await _users.GetManagersByDomainAsync(domainCode));
     }
 
-    /// <summary>
-    /// Returns authenticated user's JWT claims.
-    /// </summary>
-    /// <remarks>
-    /// Debug endpoint — should be disabled in production.
-    /// </remarks>
-    [HttpGet("debug/claims")]
-    [Authorize]
-    public IActionResult GetAuthenticatedUserClaims()
-    {
-        var claims = User.Claims
-            .Select(c => new { c.Type, c.Value })
-            .ToList();
 
-        return Ok(new
-        {
-            Authenticated = User?.Identity?.IsAuthenticated ?? false,
-            Claims = claims
-        });
-    }
 }

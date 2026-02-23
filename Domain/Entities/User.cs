@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using CRM_Backend.Domain.Enums;
 
 namespace CRM_Backend.Domain.Entities;
 

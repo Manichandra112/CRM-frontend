@@ -1,4 +1,4 @@
-﻿using CRM_Backend.Domain.Constants;
+﻿using CRM_Backend.Domain.Enums;
 using CRM_Backend.Domain.Entities;
 using CRM_Backend.DTOs.Auth;
 using CRM_Backend.Exceptions;
@@ -75,11 +75,15 @@ public class AuthService : IAuthService
         if (security?.LockedUntil != null && security.LockedUntil > DateTime.UtcNow)
             throw new ForbiddenException("Account is temporarily locked");
 
-        if (user.AccountStatus != AccountStatus.ACTIVE)
+        if (user.AccountStatus != AccountStatus.Active)
         {
-            var reason = user.AccountStatus == AccountStatus.INACTIVE
-                ? "Account is inactive"
-                : "Account has been exited";
+            var reason = user.AccountStatus switch
+            {
+                AccountStatus.Inactive => "Account is inactive",
+                AccountStatus.Exited => "Account has been exited",
+                AccountStatus.Locked => "Account is locked",
+                _ => "Account is not active"
+            };
 
             await LogAttempt(user.UserId, user.Email, ipAddress, userAgent, false, reason);
             throw new ForbiddenException(reason);

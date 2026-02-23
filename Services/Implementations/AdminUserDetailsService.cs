@@ -3,6 +3,7 @@ using CRM_Backend.DTOs.Users;
 using CRM_Backend.Exceptions;
 using CRM_Backend.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using CRM_Backend.Domain.Enums;
 
 namespace CRM_Backend.Services.Implementations;
 
@@ -29,7 +30,7 @@ public class AdminUserDetailsService : IAdminUserDetailsService
                 UserId = u.UserId,
                 Username = u.Username,
                 Email = u.Email,
-                AccountStatus = u.AccountStatus,
+                AccountStatus = u.AccountStatus.ToString(),
                 LockReason = u.LockReason,
 
                 Profile = new AdminUserProfileDto

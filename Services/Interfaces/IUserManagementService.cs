@@ -1,7 +1,7 @@
 ﻿using CRM_Backend.DTOs.Users;
 
 namespace CRM_Backend.Services.Interfaces;
-
+using CRM_Backend.Domain.Enums;
 public interface IUserManagementService
 {
     
@@ -29,6 +29,10 @@ public interface IUserManagementService
         string? status,
         string? roleCode
     );
+    Task UpdateUserStatusAsync(
+    long userId,
+    AccountStatus newStatus,
+    long updatedBy);
 
 
     Task UpdateUserOrganizationAsync(long userId, UpdateUserOrganizationDto dto, long actorId);

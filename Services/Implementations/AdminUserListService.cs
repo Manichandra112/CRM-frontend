@@ -58,10 +58,13 @@ public class AdminUserListService : IAdminUserListService
         // ----------------------------
         if (!string.IsNullOrWhiteSpace(status))
         {
-            var normalized = status.Trim().ToUpper();
-            query = query.Where(u =>
-                u.AccountStatus != null &&
-                u.AccountStatus.ToUpper() == normalized);
+            if (Enum.TryParse<Domain.Enums.AccountStatus>(
+                    status.Trim(),
+                    true,
+                    out var parsedStatus))
+            {
+                query = query.Where(u => u.AccountStatus == parsedStatus);
+            }
         }
 
         // ----------------------------
@@ -102,8 +105,7 @@ public class AdminUserListService : IAdminUserListService
                 Email = u.Email,
                 Department = u.Department,
                 Designation = u.Designation,
-                AccountStatus = u.AccountStatus,
-
+                AccountStatus = u.AccountStatus.ToString(),
                 ManagerName = u.Manager != null && u.Manager.Profile != null
                     ? (u.Manager.Profile.FirstName ?? "") + " " +
                       (u.Manager.Profile.LastName ?? "")

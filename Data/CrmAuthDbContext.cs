@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using CRM_Backend.Domain.Entities;
+using CRM_Backend.Domain.Enums;   
 
-// Alias to avoid Domain name collision
 using DomainEntity = CRM_Backend.Domain.Entities.Domain;
 
 namespace CRM_Backend.Data;
@@ -94,11 +94,9 @@ public class CrmAuthDbContext : DbContext
             entity.Property(d => d.CreatedAt)
                   .IsRequired();
 
-            // Unique per domain
             entity.HasIndex(d => new { d.DomainCode, d.Code })
                   .IsUnique();
 
-            // FK via business key (DomainCode)
             entity.HasOne<DomainEntity>()
                   .WithMany()
                   .HasForeignKey(d => d.DomainCode)
@@ -120,6 +118,18 @@ public class CrmAuthDbContext : DbContext
             .WithMany(m => m.TeamMembers)
             .HasForeignKey(u => u.ManagerId)
             .OnDelete(DeleteBehavior.SetNull);
+
+        // 🔥 ENUM → STRING CONVERSION
+        modelBuilder.Entity<User>(entity =>
+        {
+            entity.Property(u => u.AccountStatus)
+    .HasConversion(
+        v => v.ToString().ToUpper(),
+        v => Enum.Parse<AccountStatus>(v, true)
+    )
+    .HasMaxLength(20)
+    .IsRequired();
+        });
 
         // ------------------------------------------------
         // ROLE

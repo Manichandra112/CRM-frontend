@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using CRM_Backend.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using CRM_Backend.Domain.Enums;
 
 // Alias to avoid collision with namespace named "Domain"
 using DomainEntity = CRM_Backend.Domain.Entities.Domain;
@@ -126,7 +127,7 @@ namespace CRM_Backend.Data.Seed
                 {
                     Username = "admin",
                     Email = adminEmail,
-                    AccountStatus = "ACTIVE",
+                    AccountStatus = AccountStatus.Active,
                     CreatedVia = "SYSTEM",
                     DomainId = systemDomain.DomainId,
                     CreatedAt = DateTime.UtcNow

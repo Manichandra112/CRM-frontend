@@ -1,7 +1,8 @@
-﻿namespace CRM_Backend.DTOs.Users
+﻿using CRM_Backend.Domain.Enums;
+namespace CRM_Backend.DTOs.Users
 {
     public class UpdateUserStatusDto
     {
-        public string Status { get; set; }
+        public AccountStatus Status { get; set; }
     }
 }

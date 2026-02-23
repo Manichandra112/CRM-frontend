@@ -2,6 +2,7 @@
 using CRM_Backend.Domain.Entities;
 using CRM_Backend.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using CRM_Backend.Domain.Enums;
 
 namespace CRM_Backend.Repositories.Implementations;
 
@@ -42,7 +43,7 @@ public class UserRepository : IUserRepository
             .Include(u => u.Domain)
             .Where(u =>
                 u.Domain.DomainCode == domainCode &&
-                u.AccountStatus == "ACTIVE")
+                u.AccountStatus == AccountStatus.Active)
             .OrderBy(u => u.Username)
             .ToListAsync();
     }
@@ -52,7 +53,7 @@ public class UserRepository : IUserRepository
         return await _context.Users
             .Where(u =>
                 u.DomainId == domainId &&
-                u.AccountStatus == "ACTIVE")
+                u.AccountStatus == AccountStatus.Active)
             .OrderBy(u => u.Username)
             .ToListAsync();
     }
@@ -64,7 +65,7 @@ public class UserRepository : IUserRepository
             .Include(u => u.Profile)
             .Include(u => u.Domain)
             .Where(u =>
-                u.AccountStatus == "ACTIVE" &&
+                u.AccountStatus == AccountStatus.Active &&
                 u.UserRoles.Any(ur => ur.Role.RoleCode.EndsWith("_MANAGER"))
             )
             .OrderBy(u => u.Profile.FirstName)

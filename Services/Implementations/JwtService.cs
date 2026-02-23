@@ -8,6 +8,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using CRM_Backend.Domain.Enums;
 
 namespace CRM_Backend.Services.Implementations;
 
@@ -85,7 +86,7 @@ public class JwtService : IJwtService
         if (user == null)
             throw new ArgumentNullException(nameof(user));
 
-        if (user.AccountStatus != "ACTIVE")
+        if (user.AccountStatus != AccountStatus.Active)
             throw new ForbiddenException("User account is not active.");
 
         if (string.IsNullOrWhiteSpace(_settings.Key))
@@ -113,8 +114,7 @@ public class JwtService : IJwtService
         new Claim("pwd_reset_required", forcePasswordReset ? "true" : "false"),
         new Claim("pwd_reset_completed", forcePasswordReset ? "false" : "true"),
 
-        new Claim("account_status", user.AccountStatus),
-
+new Claim("account_status", user.AccountStatus.ToString()),
         new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
         new Claim(
             JwtRegisteredClaimNames.Iat,

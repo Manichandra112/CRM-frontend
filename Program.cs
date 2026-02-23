@@ -18,14 +18,20 @@ using Microsoft.OpenApi.Models;
 using System.IdentityModel.Tokens.Jwt;
 using System.Reflection;
 using System.Text;
+using CRM_Backend.Domain.Enums;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // --------------------------------------------------
 // Controllers
 // --------------------------------------------------
-builder.Services.AddControllers();
-
+builder.Services
+    .AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(
+            new System.Text.Json.Serialization.JsonStringEnumConverter());
+    });
 // --------------------------------------------------
 // Swagger
 // --------------------------------------------------
@@ -143,8 +149,7 @@ builder.Services
             ValidateAudience = true,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            ClockSkew = TimeSpan.Zero,
-
+            ClockSkew = TimeSpan.FromMinutes(1),
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
             ValidAudience = builder.Configuration["Jwt:Audience"],
 
@@ -160,7 +165,9 @@ builder.Services
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("ACCOUNT_ACTIVE",
-        policy => policy.RequireClaim("account_status", "ACTIVE"));
+    policy => policy.RequireClaim(
+        "account_status",
+        AccountStatus.Active.ToString()));
 
     options.AddPolicy("PASSWORD_RESET_COMPLETED",
         policy => policy.Requirements.Add(

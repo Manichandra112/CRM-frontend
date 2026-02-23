@@ -77,7 +77,7 @@ namespace CRM_Backend.Services.Implementations
 
                 Account = new AccountInfo
                 {
-                    AccountStatus = user.AccountStatus,
+                    AccountStatus = user.AccountStatus.ToString(),
                     CreatedAt = user.CreatedAt,
                     AccessStartDate = user.AccessStartDate,
                     AccessEndDate = user.AccessEndDate

@@ -6,6 +6,7 @@ using CRM_Backend.Repositories.Interfaces;
 using CRM_Backend.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
+using CRM_Backend.Domain.Enums;
 
 
 namespace CRM_Backend.Services.Implementations;
@@ -63,7 +64,7 @@ public class UserManagementService : IUserManagementService
             {
                 Username = dto.Username,
                 Email = dto.Email,
-                AccountStatus = "ACTIVE",
+                AccountStatus = AccountStatus.Active,
                 DomainId = domain.DomainId,
                 CreatedAt = DateTime.UtcNow,
                 CreatedBy = createdBy,
@@ -220,7 +221,7 @@ public class UserManagementService : IUserManagementService
     public async Task<List<UserLookupDto>> GetUsersAsync()
     {
         return await _context.Users
-            .Where(u => u.AccountStatus == "ACTIVE")
+            .Where(u => u.AccountStatus == AccountStatus.Active)
             .Select(u => new UserLookupDto
             {
                 UserId = u.UserId,
@@ -236,7 +237,7 @@ public class UserManagementService : IUserManagementService
     {
         return await _context.Users
             .Where(u =>
-                u.AccountStatus == "ACTIVE" &&
+                u.AccountStatus == AccountStatus.Active &&
                 u.Domain.DomainCode == domainCode
             )
             .Select(u => new UserLookupDto
@@ -254,8 +255,8 @@ public class UserManagementService : IUserManagementService
     {
         var query = _context.Users
             .Where(u =>
-                u.AccountStatus == "ACTIVE" &&
-                u.UserRoles.Any(ur => ur.Role.RoleCode.EndsWith("_MANAGER"))
+                u.AccountStatus == AccountStatus.Active &&
+                u.UserRoles.Any(ur => ur.Role.RoleCode.EndsWith("MANAGER"))
             );
 
         if (!string.IsNullOrWhiteSpace(domainCode))
@@ -271,12 +272,11 @@ public class UserManagementService : IUserManagementService
             {
                 UserId = u.UserId,
                 Name = u.Profile.FirstName + " " + u.Profile.LastName,
-                DomainCode = u.Domain.DomainCode   // 🔥 ADD THIS
+                DomainCode = u.Domain.DomainCode
             })
             .OrderBy(u => u.Name)
             .ToListAsync();
     }
-
 
 
 
@@ -485,10 +485,10 @@ public class UserManagementService : IUserManagementService
         var user = await _context.Users.FindAsync(userId)
 ?? throw new NotFoundException($"User {userId} not found.");
 
-        if (user.AccountStatus == "LOCKED")
+        if (user.AccountStatus == AccountStatus.Locked)
             throw new BusinessRuleException("User account is already locked.");
 
-        user.AccountStatus = "LOCKED";
+        user.AccountStatus = AccountStatus.Locked;
         user.LockReason = reason;
         user.UpdatedAt = DateTime.UtcNow;
         user.UpdatedBy = lockedBy;
@@ -516,10 +516,10 @@ public class UserManagementService : IUserManagementService
         var user = await _context.Users.FindAsync(userId)
 ?? throw new NotFoundException($"User {userId} not found.");
 
-        if (user.AccountStatus != "LOCKED")
+        if (user.AccountStatus != AccountStatus.Locked)
             throw new BusinessRuleException("User account is not locked.");
 
-        user.AccountStatus = "ACTIVE";
+        user.AccountStatus = AccountStatus.Active;
         user.LockReason = null;
         user.UpdatedAt = DateTime.UtcNow;
         user.UpdatedBy = unlockedBy;
@@ -538,11 +538,13 @@ public class UserManagementService : IUserManagementService
 
 
 
+    
+   
     public async Task<List<UserListDto>> GetAdminUsersByDomainAsync(
-       string domainCode,
-       string? search,
-       string? status,
-       string? roleCode)
+    string domainCode,
+    string? search,
+    string? status,
+    string? roleCode)
     {
         var query = _context.Users
             .Where(u =>
@@ -568,7 +570,10 @@ public class UserManagementService : IUserManagementService
         // 🔒 STATUS FILTER
         if (!string.IsNullOrWhiteSpace(status))
         {
-            query = query.Where(u => u.AccountStatus == status);
+            if (Enum.TryParse<AccountStatus>(status, true, out var parsedStatus))
+            {
+                query = query.Where(u => u.AccountStatus == parsedStatus);
+            }
         }
 
         // 🎭 ROLE FILTER
@@ -587,14 +592,12 @@ public class UserManagementService : IUserManagementService
                 Email = u.Email,
                 Department = u.Department,
                 Designation = u.Designation,
-                AccountStatus = u.AccountStatus,
+                AccountStatus = u.AccountStatus.ToString(),
                 AssignedBranch = u.AssignedBranch,
 
-                ManagerName = u.ManagerId != null
-                    ? _context.Users
-                        .Where(m => m.UserId == u.ManagerId)
-                        .Select(m => m.Profile.FirstName + " " + m.Profile.LastName)
-                        .FirstOrDefault()
+                // ✅ Clean navigation-based manager resolution
+                ManagerName = u.Manager != null
+                    ? u.Manager.Profile.FirstName + " " + u.Manager.Profile.LastName
                     : null,
 
                 Roles = u.UserRoles
@@ -608,7 +611,7 @@ public class UserManagementService : IUserManagementService
     {
         return await _context.Users
             .Where(u =>
-                u.AccountStatus == "ACTIVE" &&
+                u.AccountStatus == AccountStatus.Active &&
                 u.UserRoles.Any(ur => ur.Role.RoleCode.EndsWith("_MANAGER"))
             )
             .Select(u => new UserLookupDto
@@ -898,38 +901,35 @@ public class UserManagementService : IUserManagementService
     }
 
     public async Task UpdateUserStatusAsync(
-    long userId,
-    string newStatus,
-    long updatedBy)
+       long userId,
+       AccountStatus newStatus,
+       long updatedBy)
     {
-        if (string.IsNullOrWhiteSpace(newStatus))
-            throw new ValidationException("Status is required.");
-
-        var allowedStatuses = new[]
-        {
-        Domain.Constants.AccountStatus.ACTIVE,
-        Domain.Constants.AccountStatus.INACTIVE,
-        Domain.Constants.AccountStatus.EXITED
-    };
-
-        if (!allowedStatuses.Contains(newStatus))
-            throw new ValidationException("Invalid account status.");
-
         var user = await _context.Users
             .FirstOrDefaultAsync(u => u.UserId == userId)
             ?? throw new NotFoundException($"User {userId} not found.");
 
-        if (user.AccountStatus == "LOCKED")
-            throw new BusinessRuleException("Locked users must be unlocked first.");
-
         if (user.AccountStatus == newStatus)
             return;
+
+        ValidateStatusTransition(user.AccountStatus, newStatus);
 
         var oldStatus = user.AccountStatus;
 
         user.AccountStatus = newStatus;
         user.UpdatedAt = DateTime.UtcNow;
         user.UpdatedBy = updatedBy;
+
+        // 🔐 Revoke tokens if user is no longer Active
+        if (newStatus != AccountStatus.Active)
+        {
+            var tokens = await _context.RefreshTokens
+                .Where(t => t.UserId == userId && t.RevokedAt == null)
+                .ToListAsync();
+
+            foreach (var token in tokens)
+                token.RevokedAt = DateTime.UtcNow;
+        }
 
         _context.AuditLogs.Add(new AuditLog
         {
@@ -939,13 +939,28 @@ public class UserManagementService : IUserManagementService
             Module = "USERS",
             Metadata = JsonSerializer.Serialize(new
             {
-                oldStatus,
-                newStatus
+                oldStatus = oldStatus.ToString(),
+                newStatus = newStatus.ToString()
             }),
             CreatedAt = DateTime.UtcNow
         });
 
         await _context.SaveChangesAsync();
+    }
+
+    private void ValidateStatusTransition(AccountStatus current, AccountStatus target)
+    {
+        if (current == target)
+            return;
+
+        if (current == AccountStatus.Exited)
+            throw new BusinessRuleException("Exited users cannot change status.");
+
+        if (current == AccountStatus.Locked && target != AccountStatus.Active)
+            throw new BusinessRuleException("Locked users can only transition to Active.");
+
+        if (current == AccountStatus.Inactive && target == AccountStatus.Locked)
+            throw new BusinessRuleException("Inactive users cannot be locked.");
     }
 
 }
