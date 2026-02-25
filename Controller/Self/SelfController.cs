@@ -46,7 +46,7 @@ namespace CRM_Backend.Controllers.Self
         [HttpPatch("profile")]
         [HasPermission("USER_UPDATE_SELF")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<IActionResult> UpdateProfile([FromBody] UpdateSelfProfileDto dto)
+        public async Task<IActionResult> UpdateProfile([FromBody] UpdateUserProfileDto dto)
         {
             var userId = User.GetUserId();
             await _self.UpdateProfileAsync(userId, dto);

@@ -86,7 +86,7 @@ namespace CRM_Backend.Services.Implementations
         }
 
 
-        public async Task UpdateProfileAsync(long userId, UpdateSelfProfileDto dto)
+        public async Task UpdateProfileAsync(long userId, UpdateUserProfileDto dto)
         {
             var user = await _context.Users
                 .Include(u => u.Profile)

@@ -139,7 +139,7 @@ public class UserManagementService : IUserManagementService
 
 
 
-    public async Task UpdateSelfProfileAsync(long userId, UpdateSelfProfileDto dto)
+    public async Task UpdateSelfProfileAsync(long userId, UpdateUserProfileDto dto)
     {
         var user = await _context.Users
             .Include(u => u.Profile)
@@ -698,7 +698,7 @@ public class UserManagementService : IUserManagementService
     }
     public async Task UpdateUserProfileAsync(
     long userId,
-    UpdateUserProfileByAdminDto dto,
+    UpdateUserProfileDto dto,
     long updatedBy)
     {
         var user = await _context.Users

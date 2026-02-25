@@ -22,7 +22,8 @@ public interface IUserManagementService
     Task<List<UserRoleDto>> GetUserRolesAsync(long userId);
     Task LockUserAsync(long userId, string reason, long lockedBy);
     Task UnlockUserAsync(long userId, long unlockedBy);
-    Task UpdateSelfProfileAsync(long userId, UpdateSelfProfileDto dto);
+    Task UpdateSelfProfileAsync(long userId, UpdateUserProfileDto dto);
+    
     Task<List<UserListDto>> GetAdminUsersByDomainAsync(
         string domainCode,
         string? search,
@@ -36,8 +37,7 @@ public interface IUserManagementService
 
 
     Task UpdateUserOrganizationAsync(long userId, UpdateUserOrganizationDto dto, long actorId);
-    Task UpdateUserProfileAsync(long userId, UpdateUserProfileByAdminDto dto, long actorId);
-
+    Task UpdateUserProfileAsync(long userId, UpdateUserProfileDto dto, long actorId);
 
     Task UpdateUserEmailAsync(long userId, string newEmail, long updatedBy);
     Task UpdateUsernameAsync(long userId, string newUsername, long updatedBy);

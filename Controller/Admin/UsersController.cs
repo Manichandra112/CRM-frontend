@@ -163,7 +163,7 @@ public class UsersController : ControllerBase
     [HasPermission("USER_UPDATE_PROFILE")]
     public async Task<IActionResult> UpdateUserProfile(
     long userId,
-    [FromBody] UpdateUserProfileByAdminDto dto)
+    [FromBody] UpdateUserProfileDto dto)
     {
         var actorId = User.GetUserId();
         await _users.UpdateUserProfileAsync(userId, dto, actorId);

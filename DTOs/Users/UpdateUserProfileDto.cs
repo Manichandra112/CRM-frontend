@@ -1,6 +1,6 @@
 ﻿namespace CRM_Backend.DTOs.Users
 {
-    public class UpdateSelfProfileDto
+    public class UpdateUserProfileDto
     {
         public string? FirstName { get; set; }
         public string? LastName { get; set; }

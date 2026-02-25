@@ -61,8 +61,23 @@ public class AuthController : ControllerBase
             ipAddress,
             userAgent
         );
+        Response.Cookies.Append(
+    "refreshToken",
+    result.RefreshToken,
+    new CookieOptions
+    {
+        HttpOnly = true,
+        Secure = true, // true in production (HTTPS)
+        SameSite = SameSiteMode.Strict,
+        Expires = DateTime.UtcNow.AddDays(7)
+    }
+);
 
-        return Ok(result);
+        return Ok(new
+        {
+            accessToken = result.AccessToken,
+            expiresAt = result.ExpiresAt
+        });
     }
 
     // --------------------------------------------------
