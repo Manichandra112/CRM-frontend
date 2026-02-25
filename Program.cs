@@ -211,7 +211,7 @@ builder.Services.AddScoped<IPermissionService, PermissionService>();
 builder.Services.AddScoped<IAccessService, AccessService>();
 builder.Services.AddScoped<IBootstrapSeeder, BootstrapSeeder>();
 builder.Services.AddScoped<IUserSelfService, UserSelfService>();
-
+builder.Services.AddScoped<IDeviceFingerprintService, DeviceFingerprintService>();
 
 // Repositories
 builder.Services.AddScoped<IUserRepository, UserRepository>();

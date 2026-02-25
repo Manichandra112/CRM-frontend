@@ -39,6 +39,22 @@ public class RefreshTokenRepository : IRefreshTokenRepository
         await _context.SaveChangesAsync();
     }
 
+    public async Task<bool> RevokeIfActiveAsync(long refreshTokenId)
+    {
+        var token = await _context.RefreshTokens
+            .FirstOrDefaultAsync(t =>
+                t.RefreshTokenId == refreshTokenId &&
+                t.RevokedAt == null);
+
+        if (token == null)
+            return false;
+
+        token.RevokedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
     public async Task RevokeAllAsync(long userId)
     {
         var tokens = await _context.RefreshTokens
@@ -47,6 +63,20 @@ public class RefreshTokenRepository : IRefreshTokenRepository
 
         foreach (var token in tokens)
             token.RevokedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task RevokeAllActiveTokensForUserAsync(long userId)
+    {
+        var activeTokens = await _context.RefreshTokens
+            .Where(t => t.UserId == userId && t.RevokedAt == null)
+            .ToListAsync();
+
+        foreach (var token in activeTokens)
+        {
+            token.RevokedAt = DateTime.UtcNow;
+        }
 
         await _context.SaveChangesAsync();
     }

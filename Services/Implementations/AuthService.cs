@@ -26,6 +26,8 @@ public class AuthService : IAuthService
     private readonly IRefreshTokenRepository _refreshTokenRepository;
     private readonly INotificationService _notificationService;
     private readonly JwtSettings _jwtSettings;
+    private readonly IDeviceFingerprintService _fingerprintService;
+
 
 
     public AuthService(
@@ -39,7 +41,9 @@ public class AuthService : IAuthService
         IRefreshTokenRepository refreshTokenRepository,
         INotificationService notificationService,
         IConfiguration configuration,
-          IOptions<JwtSettings> jwtOptions)
+          IOptions<JwtSettings> jwtOptions,
+              IDeviceFingerprintService fingerprintService)
+
     {
         _userRepository = userRepository;
         _passwordRepository = passwordRepository;
@@ -52,6 +56,8 @@ public class AuthService : IAuthService
         _notificationService = notificationService;
         _configuration = configuration;
         _jwtSettings = jwtOptions.Value;
+        _fingerprintService = fingerprintService;
+
     }
 
     // --------------------------------------------------
@@ -117,6 +123,7 @@ public class AuthService : IAuthService
 
         var rawRefreshToken = RefreshTokenGenerator.GenerateToken();
         var hashedRefreshToken = RefreshTokenGenerator.HashToken(rawRefreshToken);
+        var fingerprint = _fingerprintService.Generate(userAgent);
 
         await _refreshTokenRepository.AddAsync(new RefreshToken
         {
@@ -126,11 +133,10 @@ public class AuthService : IAuthService
             CreatedAt = DateTime.UtcNow,
             IpAddress = ipAddress,
             UserAgent = userAgent,
-            DeviceFingerprint = $"{ipAddress}:{userAgent}".GetHashCode().ToString()
+            DeviceFingerprint = fingerprint
         });
 
-        var expiresAt = DateTime.UtcNow.AddMinutes(
-    int.Parse(_configuration["Jwt:AccessTokenMinutes"]!)
+        var expiresAt = DateTime.UtcNow.AddMinutes(_jwtSettings.AccessTokenMinutes
 );
 
         return new LoginResponseDto

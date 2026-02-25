@@ -16,17 +16,27 @@ public class TokenController : ControllerBase
     private readonly IJwtService _jwtService;
     private readonly IUserRepository _userRepo;
     private readonly IUserRoleRepository _userRoleRepo;
+    private readonly ILogger<TokenController> _logger;
+    private readonly IDeviceFingerprintService _fingerprintService;
+
+
 
     public TokenController(
         IRefreshTokenRepository refreshRepo,
         IJwtService jwtService,
         IUserRepository userRepo,
-        IUserRoleRepository userRoleRepo)
+        IUserRoleRepository userRoleRepo,
+        ILogger<TokenController> logger,
+            IDeviceFingerprintService fingerprintService)
+
     {
         _refreshRepo = refreshRepo;
         _jwtService = jwtService;
         _userRepo = userRepo;
         _userRoleRepo = userRoleRepo;
+        _logger = logger;
+        _fingerprintService = fingerprintService;
+
     }
 
     // --------------------------------------------------
@@ -44,18 +54,36 @@ public class TokenController : ControllerBase
         if (stored == null || stored.ExpiresAt < DateTime.UtcNow)
             return Unauthorized("Invalid or expired refresh token");
 
-        var fingerprint = GenerateDeviceFingerprint();
+        var fingerprint = _fingerprintService.Generate(Request.Headers.UserAgent.ToString()); var currentUserAgent = Request.Headers.UserAgent.ToString();
 
         if (stored.DeviceFingerprint != fingerprint)
-            return Unauthorized("Device mismatch");
+        {
+            _logger.LogWarning(
+                "Refresh token device mismatch. UserId: {UserId}, StoredUA: {StoredUA}, CurrentUA: {CurrentUA}",
+                stored.UserId,
+                stored.UserAgent,
+                currentUserAgent
+            );
 
-        // 🔁 Rotate old refresh token
-        await _refreshRepo.RevokeAsync(stored.RefreshTokenId);
+            return Unauthorized("Invalid refresh token");
+        }
 
         var user = await _userRepo.GetByIdAsync(stored.UserId);
         if (user == null)
             return Unauthorized("User not found");
 
+        // 🔁 Rotate old refresh token
+        var revoked = await _refreshRepo.RevokeIfActiveAsync(stored.RefreshTokenId);
+
+        if (!revoked)
+        {
+            _logger.LogWarning(
+                "Attempt to reuse already revoked refresh token. UserId: {UserId}",
+                stored.UserId
+            );
+
+            return Unauthorized("Invalid refresh token");
+        }
         var roles = await _userRoleRepo.GetRoleCodesByUserIdAsync(user.UserId);
         var permissions = await _userRoleRepo.GetPermissionCodesByUserIdAsync(user.UserId);
 
@@ -90,11 +118,5 @@ public class TokenController : ControllerBase
     // --------------------------------------------------
     // DEVICE FINGERPRINT (Stable + Secure)
     // --------------------------------------------------
-    private string GenerateDeviceFingerprint()
-    {
-        var raw = $"{HttpContext.Connection.RemoteIpAddress}:{Request.Headers.UserAgent}";
-        using var sha = SHA256.Create();
-        var hash = sha.ComputeHash(Encoding.UTF8.GetBytes(raw));
-        return Convert.ToHexString(hash);
-    }
+   
 }
