@@ -39,6 +39,13 @@ public class AdminUserDetailsService : IAdminUserDetailsService
                     LastName = u.Profile.LastName,
                     MobileNumber = u.Profile.MobileNumber,
                     Gender = u.Profile.Gender,
+
+                    AddressLine1 = u.Profile.AddressLine1,
+                    City = u.Profile.City,
+                    State = u.Profile.State,
+                    Country = u.Profile.Country,
+                    PostalCode = u.Profile.PostalCode,
+
                     LanguagePreference = u.Profile.LanguagePreference,
                     Timezone = u.Profile.Timezone
                 },
@@ -54,7 +61,10 @@ public class AdminUserDetailsService : IAdminUserDetailsService
                     AssignedRegion = u.AssignedRegion,
                     AssignedBranch = u.AssignedBranch,
                     EmploymentType = u.EmploymentType,
-                    WorkShift = u.WorkShift
+                    WorkShift = u.WorkShift,
+                    Remarks = u.Remarks,
+                    AccessStartDate = u.AccessStartDate,
+                    AccessEndDate = u.AccessEndDate,
                 },
 
                 Roles = u.UserRoles

@@ -17,6 +17,8 @@ namespace CRM_Backend.Controller.Access
     [Authorize]
     [ApiController]
     [Route("api/access")]
+    [Authorize(Policy = "ACCOUNT_ACTIVE")]
+
     [Produces("application/json")]
     public class AccessController : ControllerBase
     {

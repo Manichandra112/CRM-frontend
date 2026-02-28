@@ -257,7 +257,8 @@ public class UsersController : ControllerBase
     [HasPermission("USER_ASSIGN_MANAGER")]
     public async Task<IActionResult> AssignManager(long userId, [FromBody] AssignManagerDto dto)
     {
-        var actorUserId = long.Parse(User.FindFirst("sub")!.Value);
+        //var actorUserId = long.Parse(User.FindFirst("sub")!.Value);
+        var actorUserId = User.GetUserId();
 
         await _users.AssignManagerAsync(userId, dto.ManagerId, actorUserId);
 

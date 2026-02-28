@@ -104,8 +104,8 @@ public class TokenController : ControllerBase
                 HttpOnly = true,
                 Secure = true,
                 //SameSite = SameSiteMode.Strict,
-                SameSite = SameSiteMode.None,   
-
+                SameSite = SameSiteMode.None,
+                Path = "/",
                 Expires = DateTime.UtcNow.AddDays(_jwtSettings.RefreshTokenDays)
             });
 

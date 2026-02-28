@@ -41,7 +41,7 @@ public class AdminUserRolesController : ControllerBase
     /// Assigns a role to a user.
     /// </summary>
     /// <remarks>
-    /// Permission Required: USER_ASSIGN_ROLE
+    /// Permission Required: USER_ROLE_MANAGE
     ///
     /// Sample Request:
     ///
@@ -59,9 +59,9 @@ public class AdminUserRolesController : ControllerBase
     /// <response code="400">Invalid input.</response>
     /// <response code="404">User or role not found.</response>
     /// <response code="401">User not authenticated.</response>
-    /// <response code="403">User lacks USER_ASSIGN_ROLE permission.</response>
+    /// <response code="403">User lacks USER_ROLE_MANAGE permission.</response>
     [HttpPost]
-    [HasPermission("USER_ASSIGN_ROLE")]
+    [HasPermission("USER_ROLE_MANAGE")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -83,7 +83,7 @@ public class AdminUserRolesController : ControllerBase
     /// Removes a role from a user.
     /// </summary>
     /// <remarks>
-    /// Permission Required: USER_ASSIGN_ROLE
+    /// Permission Required: USER_ROLE_MANAGE
     ///
     /// Sample Request:
     ///
@@ -98,9 +98,9 @@ public class AdminUserRolesController : ControllerBase
     /// <response code="400">Invalid input.</response>
     /// <response code="404">User or role not found.</response>
     /// <response code="401">User not authenticated.</response>
-    /// <response code="403">User lacks USER_ASSIGN_ROLE permission.</response>
+    /// <response code="403">User lacks USER_ROLE_MANAGE permission.</response>
     [HttpDelete]
-    [HasPermission("USER_ASSIGN_ROLE")]
+    [HasPermission("USER_ROLE_MANAGE")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

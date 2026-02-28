@@ -10,5 +10,8 @@
         public string? AssignedBranch { get; set; }
         public string? EmploymentType { get; set; }
         public string? WorkShift { get; set; }
+        public string? Remarks { get; set; }
+        public DateTime? AccessStartDate { get; set; }
+        public DateTime? AccessEndDate { get; set; }
     }
 }

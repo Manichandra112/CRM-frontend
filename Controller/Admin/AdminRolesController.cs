@@ -1,6 +1,4 @@
-﻿
-
-using CRM_Backend.DTOs.Roles;
+﻿using CRM_Backend.DTOs.Roles;
 using CRM_Backend.Security.Authorization;
 using CRM_Backend.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
