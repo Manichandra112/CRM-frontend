@@ -5,6 +5,8 @@ using System.Security.Claims;
 
 namespace CRM_Backend.Controller.Access
 {
+
+
     /// <summary>
     /// Provides access information for the authenticated user.
     /// Used by frontend to build authorization-aware UI.
@@ -18,6 +20,8 @@ namespace CRM_Backend.Controller.Access
     [ApiController]
     [Route("api/access")]
     [Authorize(Policy = "ACCOUNT_ACTIVE")]
+    [Authorize(Policy = "PASSWORD_RESET_COMPLETED")]
+
 
     [Produces("application/json")]
     public class AccessController : ControllerBase
