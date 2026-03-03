@@ -20,7 +20,6 @@ namespace CRM_Backend.Controller.Access
     [ApiController]
     [Route("api/access")]
     [Authorize(Policy = "ACCOUNT_ACTIVE")]
-    [Authorize(Policy = "PASSWORD_RESET_COMPLETED")]
 
 
     [Produces("application/json")]

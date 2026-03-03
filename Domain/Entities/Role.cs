@@ -35,7 +35,7 @@ public class Role
 
     public ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
 
-  
+
     public ICollection<RolePermission> RolePermissions { get; set; }
         = new List<RolePermission>();
 
@@ -44,4 +44,13 @@ public class Role
 
     [ForeignKey(nameof(DomainId))]
     public Domain Domain { get; set; } = null!;
+
+
+    // --------------------------------------------
+    // MODULE
+    // --------------------------------------------
+    [Column("module_id")]
+    public long? ModuleId { get; set; }
+
+    public Module? Module { get; set; }
 }

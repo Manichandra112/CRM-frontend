@@ -14,9 +14,10 @@ public class Permission
     [Column("description"), MaxLength(255)]
     public string? Description { get; set; }
 
-    [Column("module"), MaxLength(50)]
-    public string? Module { get; set; }
+    [Column("module_id")]
+    public long? ModuleId { get; set; }
 
+    public Module? Module { get; set; }
     [Column("active")]
     public bool Active { get; set; } = true;
 

@@ -35,6 +35,7 @@ public class CrmAuthDbContext : DbContext
 
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
 
+    public DbSet<Module> Modules { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -119,6 +120,12 @@ public class CrmAuthDbContext : DbContext
             .HasForeignKey(u => u.ManagerId)
             .OnDelete(DeleteBehavior.SetNull);
 
+        modelBuilder.Entity<Role>()
+    .HasOne(r => r.Module)
+    .WithMany(m => m.Roles)
+    .HasForeignKey(r => r.ModuleId)
+    .OnDelete(DeleteBehavior.Restrict);
+
         // 🔥 ENUM → STRING CONVERSION
         modelBuilder.Entity<User>(entity =>
         {
@@ -152,6 +159,31 @@ public class CrmAuthDbContext : DbContext
         modelBuilder.Entity<UserRole>()
             .HasIndex(ur => new { ur.UserId, ur.RoleId })
             .IsUnique();
+
+        // ------------------------------------------------
+        // MODULE
+        // ------------------------------------------------
+        modelBuilder.Entity<Module>(entity =>
+        {
+            entity.ToTable("modules");
+
+            entity.HasKey(m => m.ModuleId);
+
+            entity.Property(m => m.ModuleCode)
+                  .IsRequired()
+                  .HasMaxLength(50);
+
+            entity.HasIndex(m => m.ModuleCode)
+                  .IsUnique();
+        });
+        // ------------------------------------------------
+        // PERMISSION → MODULE
+        // ------------------------------------------------
+        modelBuilder.Entity<Permission>()
+            .HasOne(p => p.Module)
+            .WithMany(m => m.Permissions)
+            .HasForeignKey(p => p.ModuleId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         // ------------------------------------------------
         // AUDIT LOGS (append-only)

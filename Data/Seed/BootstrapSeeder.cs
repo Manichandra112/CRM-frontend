@@ -44,6 +44,25 @@ namespace CRM_Backend.Data.Seed
                 _db.Domains.Add(systemDomain);
                 await _db.SaveChangesAsync();
             }
+            // --------------------------------------------------
+            // 1️⃣ ENSURE MODULE (SYSTEM)
+            // --------------------------------------------------
+            var systemModule = await _db.Modules
+                .FirstOrDefaultAsync(m => m.ModuleCode == "SYSTEM");
+
+            if (systemModule == null)
+            {
+                systemModule = new Module
+                {
+                    ModuleCode = "SYSTEM",
+                    ModuleName = "System Administration",
+                    Active = true,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                _db.Modules.Add(systemModule);
+                await _db.SaveChangesAsync();
+            }
 
             // --------------------------------------------------
             // 2️⃣ ENSURE ROLE (ADMIN)
@@ -63,6 +82,7 @@ namespace CRM_Backend.Data.Seed
                     Active = true,
                     IsSystemRole = true,
                     DomainId = systemDomain.DomainId,
+                    ModuleId = systemModule.ModuleId, 
                     CreatedAt = DateTime.UtcNow
                 };
 
@@ -82,7 +102,7 @@ namespace CRM_Backend.Data.Seed
                 {
                     PermissionCode = "CRM_FULL_ACCESS",
                     Description = "Full access to all CRM modules",
-                    Module = "SYSTEM",
+                    ModuleId = systemModule.ModuleId,
                     Active = true,
                     CreatedAt = DateTime.UtcNow
                 };

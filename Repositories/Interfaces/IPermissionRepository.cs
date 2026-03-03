@@ -4,7 +4,7 @@ namespace CRM_Backend.Repositories.Interfaces;
 
 public interface IPermissionRepository
 {
-    Task<long> CreateAsync(string code, string description, string module);
+    Task<long> CreateAsync(string code, string description, long module);
     Task<List<Permission>> GetAllAsync();
 
 

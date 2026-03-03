@@ -212,6 +212,7 @@ builder.Services.AddScoped<IAccessService, AccessService>();
 builder.Services.AddScoped<IBootstrapSeeder, BootstrapSeeder>();
 builder.Services.AddScoped<IUserSelfService, UserSelfService>();
 builder.Services.AddScoped<IDeviceFingerprintService, DeviceFingerprintService>();
+builder.Services.AddScoped<IModuleService, ModuleService>();
 
 // Repositories
 builder.Services.AddScoped<IUserRepository, UserRepository>();
@@ -224,6 +225,8 @@ builder.Services.AddScoped<IPermissionRepository, PermissionRepository>();
 builder.Services.AddScoped<IRolePermissionRepository, RolePermissionRepository>();
 builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 builder.Services.AddScoped<IDomainRepository, DomainRepository>();
+builder.Services.AddScoped<IModuleRepository, ModuleRepository>();
+
 
 // --------------------------------------------------
 var app = builder.Build();

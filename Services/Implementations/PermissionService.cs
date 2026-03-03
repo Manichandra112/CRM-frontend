@@ -9,12 +9,17 @@ namespace CRM_Backend.Services.Implementations;
 public class PermissionService : IPermissionService
 {
     private readonly IPermissionRepository _permissions;
+    private readonly IModuleRepository _modules;
 
-    public PermissionService(IPermissionRepository permissions)
+
+    public PermissionService(IPermissionRepository permissions, IModuleRepository modules)
     {
         _permissions = permissions
             ?? throw new ArgumentNullException(nameof(permissions));
-    }
+        _modules = modules ?? throw new ArgumentNullException(nameof(modules));
+ 
+   }
+
 
     public async Task<long> CreateAsync(CreatePermissionDto dto)
     {
@@ -24,25 +29,26 @@ public class PermissionService : IPermissionService
         if (string.IsNullOrWhiteSpace(dto.PermissionCode))
             throw new ValidationException("PermissionCode is required.");
 
-        if (string.IsNullOrWhiteSpace(dto.Module))
-            throw new ValidationException("Module is required.");
+        if (dto.ModuleId <= 0)
+            throw new ValidationException("Valid ModuleId is required.");
 
         var normalizedCode = dto.PermissionCode.Trim().ToUpper();
-        var normalizedModule = dto.Module.Trim().ToUpper();
 
         var existing = await _permissions.GetByCodeAsync(normalizedCode);
         if (existing != null)
-            throw new ConflictException(
-                $"Permission '{normalizedCode}' already exists.");
+            throw new ConflictException($"Permission '{normalizedCode}' already exists.");
+
+        var module = await _modules.GetByIdAsync(dto.ModuleId);
+        if (module == null)
+            throw new NotFoundException("Module not found.");
 
         return await _permissions.CreateAsync(
             normalizedCode,
             dto.Description?.Trim(),
-            normalizedModule
+            dto.ModuleId
         );
     }
-
-    //public async Task<List<Permission>> GetAllAsync()
+    ///public async Task<List<Permission>> GetAllAsync()
     //{
     //    return await _permissions.GetAllAsync();
     //}
@@ -56,7 +62,7 @@ public class PermissionService : IPermissionService
             PermissionId = p.PermissionId,
             PermissionCode = p.PermissionCode,
             Description = p.Description,
-            Module = p.Module,
+            Module = p.Module.ModuleCode,
             Active = p.Active,
             CreatedAt = p.CreatedAt,
             UpdatedAt = p.UpdatedAt
