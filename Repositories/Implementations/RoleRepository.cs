@@ -14,24 +14,27 @@ public class RoleRepository : IRoleRepository
         _context = context;
     }
 
-
     public async Task<Role?> GetByCodeAsync(string roleCode)
     {
         return await _context.Roles
+            .Include(r => r.Module)
             .FirstOrDefaultAsync(r => r.RoleCode == roleCode);
     }
-
 
     public async Task<Role> CreateAsync(
         string roleName,
         string roleCode,
         string? description,
         long domainId,
+        long moduleId,
         bool isSystemRole
     )
     {
-        if (await _context.Roles.AnyAsync(r => r.RoleCode == roleCode))
-            throw new Exception("Role already exists");
+        if (await _context.Roles
+    .AnyAsync(r => r.RoleCode == roleCode && r.DomainId == domainId))
+        {
+            throw new Exception("Role already exists in this domain.");
+        }
 
         var role = new Role
         {
@@ -39,6 +42,7 @@ public class RoleRepository : IRoleRepository
             RoleCode = roleCode,
             Description = description,
             DomainId = domainId,
+            ModuleId = moduleId,
             IsSystemRole = isSystemRole,
             Active = true,
             CreatedAt = DateTime.UtcNow
@@ -53,6 +57,8 @@ public class RoleRepository : IRoleRepository
     public async Task<List<Role>> GetAllAsync()
     {
         return await _context.Roles
+            .AsNoTracking()
+            .Include(r => r.Module)
             .Where(r => r.Active)
             .OrderBy(r => r.RoleName)
             .ToListAsync();
@@ -66,9 +72,21 @@ public class RoleRepository : IRoleRepository
             .SingleAsync();
     }
 
+    public async Task<long> GetRoleIdByCodeAndDomainAsync(string roleCode, long domainId)
+    {
+        return await _context.Roles
+            .Where(r => r.RoleCode == roleCode
+                     && r.DomainId == domainId
+                     && r.Active)
+            .Select(r => r.RoleId)
+            .SingleAsync();
+    }
+
     public async Task<List<Role>> GetByDomainIdAsync(long domainId)
     {
         return await _context.Roles
+            .AsNoTracking()
+            .Include(r => r.Module)
             .Where(r => r.DomainId == domainId && r.Active)
             .OrderBy(r => r.RoleName)
             .ToListAsync();
@@ -77,21 +95,22 @@ public class RoleRepository : IRoleRepository
     public async Task<Role?> GetByIdAsync(long id)
     {
         return await _context.Roles
+            .Include(r => r.Module)
             .FirstOrDefaultAsync(r => r.RoleId == id);
     }
 
     public async Task UpdateAsync(Role role)
     {
-        // Entity is already tracked → just save
+        _context.Roles.Update(role);
         await _context.SaveChangesAsync();
     }
 
     public async Task<List<Role>> GetByCodesAsync(IEnumerable<string> roleCodes)
     {
         return await _context.Roles
+            .AsNoTracking()
+            .Include(r => r.Module)
             .Where(r => roleCodes.Contains(r.RoleCode) && r.Active)
             .ToListAsync();
     }
-
-
 }

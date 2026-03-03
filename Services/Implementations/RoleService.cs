@@ -10,11 +10,16 @@ public class RoleService : IRoleService
 {
     private readonly IRoleRepository _roles;
     private readonly IDomainRepository _domains;
+    private readonly IModuleRepository _modules;
 
-    public RoleService(IRoleRepository roles, IDomainRepository domains)
+    public RoleService(
+        IRoleRepository roles,
+        IDomainRepository domains,
+        IModuleRepository modules)
     {
         _roles = roles ?? throw new ArgumentNullException(nameof(roles));
         _domains = domains ?? throw new ArgumentNullException(nameof(domains));
+        _modules = modules ?? throw new ArgumentNullException(nameof(modules));
     }
 
     private static RoleResponseDto Map(Role role)
@@ -26,6 +31,11 @@ public class RoleService : IRoleService
             RoleCode = role.RoleCode,
             Description = role.Description,
             DomainId = role.DomainId,
+
+            ModuleId = role.ModuleId,
+            ModuleCode = role.Module?.ModuleCode,
+            ModuleName = role.Module?.ModuleName,
+
             IsSystemRole = role.IsSystemRole,
             Active = role.Active
         };
@@ -45,25 +55,18 @@ public class RoleService : IRoleService
         if (string.IsNullOrWhiteSpace(dto.DomainCode))
             throw new ValidationException("DomainCode is required.");
 
+        if (string.IsNullOrWhiteSpace(dto.ModuleCode))
+            throw new ValidationException("ModuleCode is required.");
+
         var normalizedRoleCode = dto.RoleCode.Trim().ToUpper();
         var normalizedDomainCode = dto.DomainCode.Trim().ToUpper();
+        var normalizedModuleCode = dto.ModuleCode.Trim().ToUpper();
 
         var domain = await _domains.GetByCodeAsync(normalizedDomainCode)
             ?? throw new NotFoundException($"Domain '{normalizedDomainCode}' not found.");
 
-        if (!normalizedRoleCode.StartsWith(normalizedDomainCode + "_"))
-            throw new BusinessRuleException(
-                $"RoleCode must start with '{normalizedDomainCode}_'."
-            );
-
-        if (normalizedRoleCode.Length <= normalizedDomainCode.Length + 1)
-            throw new ValidationException(
-                "RoleCode must contain a suffix after the domain prefix."
-            );
-
-        var existing = await _roles.GetByCodeAsync(normalizedRoleCode);
-        if (existing != null)
-            throw new ConflictException($"Role '{normalizedRoleCode}' already exists.");
+        var module = await _modules.GetByCodeAsync(normalizedModuleCode)
+            ?? throw new NotFoundException($"Module '{normalizedModuleCode}' not found.");
 
         var isSystemRole = normalizedDomainCode == "SYSTEM";
 
@@ -72,14 +75,12 @@ public class RoleService : IRoleService
             normalizedRoleCode,
             dto.Description?.Trim(),
             domain.DomainId,
+            module.ModuleId,
             isSystemRole
         );
 
         return Map(role);
     }
-
-
-
 
     public async Task<List<RoleResponseDto>> GetAllAsync()
     {

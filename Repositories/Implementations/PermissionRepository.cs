@@ -88,6 +88,9 @@
 
 //}
 
+
+
+
 using CRM_Backend.Data;
 using CRM_Backend.Domain.Entities;
 using CRM_Backend.Repositories.Interfaces;
@@ -109,8 +112,9 @@ public class PermissionRepository : IPermissionRepository
         string description,
         long moduleId)
     {
-        if (await _context.Permissions.AnyAsync(p => p.PermissionCode == code))
-            throw new Exception("Permission already exists");
+        if (await _context.Permissions
+            .AnyAsync(p => p.PermissionCode == code))
+            throw new Exception("Permission already exists.");
 
         var permission = new Permission
         {
@@ -130,7 +134,8 @@ public class PermissionRepository : IPermissionRepository
     public async Task<List<Permission>> GetAllAsync()
     {
         return await _context.Permissions
-            .Include(p => p.Module) // 🔥 IMPORTANT
+            .AsNoTracking()
+            .Include(p => p.Module)
             .OrderBy(p => p.PermissionCode)
             .ToListAsync();
     }
@@ -138,6 +143,7 @@ public class PermissionRepository : IPermissionRepository
     public async Task<long?> GetPermissionIdByCodeAsync(string permissionCode)
     {
         return await _context.Permissions
+            .AsNoTracking()
             .Where(p => p.PermissionCode == permissionCode && p.Active)
             .Select(p => (long?)p.PermissionId)
             .SingleOrDefaultAsync();
@@ -147,6 +153,7 @@ public class PermissionRepository : IPermissionRepository
         IEnumerable<long> permissionIds)
     {
         return await _context.Permissions
+            .AsNoTracking()
             .Where(p => permissionIds.Contains(p.PermissionId) && p.Active)
             .Select(p => p.PermissionCode)
             .OrderBy(code => code)
@@ -156,20 +163,16 @@ public class PermissionRepository : IPermissionRepository
     public async Task<Permission?> GetByIdAsync(long id)
     {
         return await _context.Permissions
-            .Include(p => p.Module) // 🔥 IMPORTANT
+            .Include(p => p.Module)
             .FirstOrDefaultAsync(p => p.PermissionId == id);
     }
 
-    public async Task UpdateAsync(Permission permission)
-    {
-        _context.Entry(permission).State = EntityState.Modified;
-        await _context.SaveChangesAsync();
-    }
-
-    public async Task<List<Permission>> GetByCodesAsync(IEnumerable<string> permissionCodes)
+    public async Task<List<Permission>> GetByCodesAsync(
+        IEnumerable<string> permissionCodes)
     {
         return await _context.Permissions
-            .Include(p => p.Module) // 🔥 CRITICAL FOR AccessService
+            .AsNoTracking()
+            .Include(p => p.Module)
             .Where(p => permissionCodes.Contains(p.PermissionCode) && p.Active)
             .ToListAsync();
     }
@@ -177,7 +180,13 @@ public class PermissionRepository : IPermissionRepository
     public async Task<Permission?> GetByCodeAsync(string permissionCode)
     {
         return await _context.Permissions
-            .Include(p => p.Module) // 🔥 IMPORTANT
+            .Include(p => p.Module)
             .FirstOrDefaultAsync(p => p.PermissionCode == permissionCode);
+    }
+
+    public async Task UpdateAsync(Permission permission)
+    {
+        _context.Permissions.Update(permission);
+        await _context.SaveChangesAsync();
     }
 }

@@ -37,6 +37,7 @@ namespace CRM_Backend.Services.Implementations
                 ? userEmail
                 : _email.OverrideRecipient;
 
+
             try
             {
                 using var message = new MailMessage
@@ -68,6 +69,7 @@ namespace CRM_Backend.Services.Implementations
             {
                 throw new InternalServerException("Failed to send reset email");
             }
+
 
         }
     }

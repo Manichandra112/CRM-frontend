@@ -182,9 +182,10 @@ public class AuthService : IAuthService
     public async Task ForgotPasswordAsync(string email)
     {
 
- email = email.Trim().ToLowerInvariant();
 
- var user = await _userRepository.GetByEmailAsync(email);
+        email = email.Trim();
+
+        var user = await _userRepository.GetByEmailAsync(email);
          if (user == null)
             return;
 
@@ -196,6 +197,9 @@ public class AuthService : IAuthService
             tokenHash,
             DateTime.UtcNow.AddMinutes(15)
         );
+
+
+
 
         var baseUrl = _configuration["Frontend:BaseUrl"]?.TrimEnd('/');
         if (string.IsNullOrWhiteSpace(baseUrl))
