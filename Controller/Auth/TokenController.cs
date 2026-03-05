@@ -102,7 +102,7 @@ public class TokenController : ControllerBase
             new CookieOptions
             {
                 HttpOnly = true,
-                Secure = true,
+                Secure = true,    
                 //SameSite = SameSiteMode.Strict,
                 SameSite = SameSiteMode.None,
                 Path = "/",

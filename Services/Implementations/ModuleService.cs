@@ -1,4 +1,5 @@
 ﻿using CRM_Backend.Domain.Entities;
+using CRM_Backend.DTOs.Module;
 using CRM_Backend.Repositories.Interfaces;
 using CRM_Backend.Services.Interfaces;
 
@@ -27,5 +28,17 @@ public class ModuleService : IModuleService
             throw new Exception("Module name is required.");
 
         return await _moduleRepo.CreateAsync(code, name);
+    }
+
+    public async Task<List<ModuleListDto>> GetAvailableAsync()
+    {
+        var modules = await _moduleRepo.GetAllAsync();
+
+        return modules.Select(m => new ModuleListDto
+        {
+            ModuleId = m.ModuleId,
+            ModuleCode = m.ModuleCode,
+            ModuleName = m.ModuleName
+        }).ToList();
     }
 }

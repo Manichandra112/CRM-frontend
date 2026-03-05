@@ -1,5 +1,5 @@
-﻿using CRM_Backend.Services.Interfaces;
-using CRM_Backend.DTOs.Module;
+﻿using CRM_Backend.DTOs.Module;
+using CRM_Backend.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CRM_Backend.Controllers.Admin;
@@ -26,5 +26,12 @@ public class ModulesController : ControllerBase
     public async Task<IActionResult> GetAll()
     {
         return Ok(await _service.GetAllAsync());
+    }
+
+    [HttpGet("available")]
+    public async Task<IActionResult> GetAvailableModules()
+    {
+        var modules = await _service.GetAvailableAsync();
+        return Ok(modules);
     }
 }
