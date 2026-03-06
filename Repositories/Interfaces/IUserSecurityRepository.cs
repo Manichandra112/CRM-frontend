@@ -10,7 +10,6 @@ public interface IUserSecurityRepository
     Task LockUserAsync(long userId, TimeSpan duration);
     Task ClearForceResetAsync(long userId);
 
-
     Task SetPasswordResetAsync(
         long userId,
         string tokenHash,
@@ -31,4 +30,6 @@ public interface IUserSecurityRepository
     string userAgent,
     string? location = null
 );
+
+    Task UpdateAsync(UserSecurity security);
 }

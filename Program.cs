@@ -1,5 +1,4 @@
-﻿
-using CRM_Backend.Data;
+﻿using CRM_Backend.Data;
 using CRM_Backend.Data.Seed;
 using CRM_Backend.Middlewares;
 using CRM_Backend.Repositories.Implementations;
@@ -11,10 +10,12 @@ using CRM_Backend.Services.Implementations;
 using CRM_Backend.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Npgsql;
 using System.IdentityModel.Tokens.Jwt;
 using System.Reflection;
 using System.Text;
@@ -22,16 +23,10 @@ using CRM_Backend.Domain.Enums;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// --------------------------------------------------
+/////////////////////////////////////////////////////
 // Controllers
-// --------------------------------------------------
-//builder.Services
-//    .AddControllers()
-//    .AddJsonOptions(options =>
-//    {
-//        options.JsonSerializerOptions.Converters.Add(
-//            new System.Text.Json.Serialization.JsonStringEnumConverter());
-//    });
+/////////////////////////////////////////////////////
+
 builder.Services
     .AddControllers()
     .AddJsonOptions(options =>
@@ -42,10 +37,13 @@ builder.Services
         options.JsonSerializerOptions.ReferenceHandler =
             System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
     });
-// --------------------------------------------------
+
+/////////////////////////////////////////////////////
 // Swagger
-// --------------------------------------------------
+/////////////////////////////////////////////////////
+
 builder.Services.AddEndpointsApiExplorer();
+
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo
@@ -59,6 +57,7 @@ builder.Services.AddSwaggerGen(c =>
             Email = "support@yourdomain.com"
         }
     });
+
     var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
     c.IncludeXmlComments(xmlPath);
@@ -89,26 +88,54 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// --------------------------------------------------
+/////////////////////////////////////////////////////
 // Database (PostgreSQL)
-// --------------------------------------------------
-builder.Services.AddDbContext<CrmAuthDbContext>(options =>
+/////////////////////////////////////////////////////
+
+builder.Services.AddDbContextPool<CrmAuthDbContext>(options =>
 {
     options.UseNpgsql(
-        builder.Configuration.GetConnectionString("DefaultConnection"));
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        npgsqlOptions =>
+        {
+            // Support for PostgreSQL types
+            NpgsqlConnection.GlobalTypeMapper.MapEnum<AccountStatus>();
+            
+            // Enable retry on failure for resilience
+            npgsqlOptions.EnableRetryOnFailure(
+                maxRetryCount: 5,
+                maxRetryDelay: TimeSpan.FromSeconds(10),
+                errorCodesToAdd: null);
+        });
 });
 
-// --------------------------------------------------
-// API behavior
-// --------------------------------------------------
+/////////////////////////////////////////////////////
+// API Behavior
+/////////////////////////////////////////////////////
+
 builder.Services.Configure<ApiBehaviorOptions>(options =>
 {
     options.SuppressModelStateInvalidFilter = true;
 });
 
-// --------------------------------------------------
-// CORS (⚠ tighten in production)
-// --------------------------------------------------
+/////////////////////////////////////////////////////
+// Forwarded Headers
+/////////////////////////////////////////////////////
+
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders =
+        ForwardedHeaders.XForwardedFor |
+        ForwardedHeaders.XForwardedProto;
+
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+
+/////////////////////////////////////////////////////
+// CORS
+/////////////////////////////////////////////////////
+
 var allowedOrigins = builder.Configuration
     .GetSection("Frontend:AllowedOrigins")
     .Get<string[]>() ?? Array.Empty<string>();
@@ -124,13 +151,10 @@ builder.Services.AddCors(options =>
     });
 });
 
-
-
-
-
-// --------------------------------------------------
+/////////////////////////////////////////////////////
 // Configuration Bindings
-// --------------------------------------------------
+/////////////////////////////////////////////////////
+
 builder.Services.Configure<JwtSettings>(
     builder.Configuration.GetSection("Jwt"));
 
@@ -140,16 +164,17 @@ builder.Services.Configure<EmailSettings>(
 builder.Services.Configure<SmtpSettings>(
     builder.Configuration.GetSection("Smtp"));
 
-// --------------------------------------------------
-// Authentication (JWT)
-// --------------------------------------------------
+/////////////////////////////////////////////////////
+// Authentication
+/////////////////////////////////////////////////////
+
 JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        options.RequireHttpsMetadata = false; // set true in prod
+        options.RequireHttpsMetadata = false;
         options.SaveToken = true;
         options.MapInboundClaims = false;
 
@@ -159,7 +184,9 @@ builder.Services
             ValidateAudience = true,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
+
             ClockSkew = TimeSpan.FromMinutes(1),
+
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
             ValidAudience = builder.Configuration["Jwt:Audience"],
 
@@ -169,39 +196,46 @@ builder.Services
         };
     });
 
-// --------------------------------------------------
+/////////////////////////////////////////////////////
 // Authorization
-// --------------------------------------------------
+/////////////////////////////////////////////////////
+
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("ACCOUNT_ACTIVE",
-    policy => policy.RequireClaim(
-        "account_status",
-        AccountStatus.Active.ToString()));
+        policy => policy.RequireClaim(
+            "account_status",
+            AccountStatus.Active.ToString()));
 
     options.AddPolicy("PASSWORD_RESET_COMPLETED",
         policy => policy.Requirements.Add(
             new ForcePasswordResetRequirement()));
 });
 
-// --------------------------------------------------
-// Dependency Injection
-// --------------------------------------------------
+/////////////////////////////////////////////////////
+// HttpClient
+/////////////////////////////////////////////////////
 
-// HttpClient for GeoLocation (timeout protected)
 builder.Services.AddHttpClient<IGeoLocationService, GeoLocationService>(client =>
 {
     client.Timeout = TimeSpan.FromSeconds(3);
 });
 
-// Authorization handlers
+/////////////////////////////////////////////////////
+// Authorization Handlers
+/////////////////////////////////////////////////////
+
 builder.Services.AddScoped<IAuthorizationHandler, ForcePasswordResetHandler>();
 builder.Services.AddScoped<IAuthorizationHandler, PermissionHandler>();
 
-builder.Services.AddSingleton<IAuthorizationPolicyProvider,
+builder.Services.AddSingleton<
+    IAuthorizationPolicyProvider,
     PermissionPolicyProvider>();
 
+/////////////////////////////////////////////////////
 // Services
+/////////////////////////////////////////////////////
+
 builder.Services.AddScoped<IPasswordService, PasswordService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -223,8 +257,12 @@ builder.Services.AddScoped<IBootstrapSeeder, BootstrapSeeder>();
 builder.Services.AddScoped<IUserSelfService, UserSelfService>();
 builder.Services.AddScoped<IDeviceFingerprintService, DeviceFingerprintService>();
 builder.Services.AddScoped<IModuleService, ModuleService>();
+builder.Services.AddScoped<IMfaService, MfaService>();
 
+/////////////////////////////////////////////////////
 // Repositories
+/////////////////////////////////////////////////////
+
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserPasswordRepository, UserPasswordRepository>();
 builder.Services.AddScoped<IUserRoleRepository, UserRoleRepository>();
@@ -237,18 +275,29 @@ builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 builder.Services.AddScoped<IDomainRepository, DomainRepository>();
 builder.Services.AddScoped<IModuleRepository, ModuleRepository>();
 
+/////////////////////////////////////////////////////
+// Build App
+/////////////////////////////////////////////////////
 
-// --------------------------------------------------
 var app = builder.Build();
 
-// Seed
+/////////////////////////////////////////////////////
+// Database Migration + Seed
+/////////////////////////////////////////////////////
+
 using (var scope = app.Services.CreateScope())
 {
+    var db = scope.ServiceProvider.GetRequiredService<CrmAuthDbContext>();
+    await db.Database.MigrateAsync();
+
     var seeder = scope.ServiceProvider.GetRequiredService<IBootstrapSeeder>();
     await seeder.SeedAsync();
 }
 
-// Exception middleware FIRST
+/////////////////////////////////////////////////////
+// Middleware Pipeline
+/////////////////////////////////////////////////////
+
 app.UseMiddleware<GlobalExceptionMiddleware>();
 
 if (app.Environment.IsDevelopment() ||
@@ -258,6 +307,7 @@ if (app.Environment.IsDevelopment() ||
     app.UseSwaggerUI();
 }
 
+app.UseForwardedHeaders();
 
 app.UseCors("DefaultCors");
 

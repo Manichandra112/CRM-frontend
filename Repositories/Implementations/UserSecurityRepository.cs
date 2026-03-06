@@ -159,4 +159,10 @@ public class UserSecurityRepository : IUserSecurityRepository
         await _context.SaveChangesAsync();
     }
 
+    public async Task UpdateAsync(UserSecurity security)
+    {
+        _context.UserSecurity.Update(security);
+        await _context.SaveChangesAsync();
+    }
+
 }

@@ -23,7 +23,7 @@ namespace CRM_Backend.Data.Seed
 
         public async Task SeedAsync()
         {
-            await _db.Database.MigrateAsync();
+            
 
             // --------------------------------------------------
             // 1️⃣ ENSURE DOMAIN (SYSTEM)

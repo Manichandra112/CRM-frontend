@@ -67,8 +67,9 @@ public class AuthController : ControllerBase
     new CookieOptions
     {
         HttpOnly = true,
-        Secure = true, // true in production (HTTPS)
+        Secure = !HttpContext.Request.IsHttps ? false : true,
         SameSite = SameSiteMode.Strict,
+        Path = "/",
         Expires = DateTime.UtcNow.AddDays(7)
     }
 );

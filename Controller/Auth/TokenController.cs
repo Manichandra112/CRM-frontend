@@ -55,27 +55,48 @@ public class TokenController : ControllerBase
         var refreshToken = Request.Cookies["refreshToken"];
 
         if (string.IsNullOrWhiteSpace(refreshToken))
-            return Unauthorized("Missing refresh token");
+        {
+            _logger.LogWarning("Refresh token missing from cookies");
+            return Unauthorized(new { error = "Missing refresh token" });
+        }
 
         var tokenHash = RefreshTokenGenerator.HashToken(refreshToken);
         var stored = await _refreshRepo.GetByHashAsync(tokenHash);
 
-        if (stored == null || stored.ExpiresAt < DateTime.UtcNow)
-            return Unauthorized("Invalid or expired refresh token");
+        if (stored == null)
+        {
+            _logger.LogWarning("Refresh token not found or revoked in database");
+            return Unauthorized(new { error = "Invalid or revoked refresh token" });
+        }
+
+        if (stored.ExpiresAt < DateTime.UtcNow)
+        {
+            _logger.LogWarning("Refresh token expired");
+            return Unauthorized(new { error = "Refresh token expired" });
+        }
 
         var currentUserAgent = Request.Headers.UserAgent.ToString();
         var fingerprint = _fingerprintService.Generate(currentUserAgent);
 
         if (stored.DeviceFingerprint != fingerprint)
-            return Unauthorized("Invalid refresh token");
+        {
+            _logger.LogWarning("Device fingerprint mismatch - possible token hijack attempt");
+            return Unauthorized(new { error = "Device verification failed" });
+        }
 
         var user = await _userRepo.GetByIdAsync(stored.UserId);
         if (user == null)
-            return Unauthorized("User not found");
+        {
+            _logger.LogWarning("User not found for refresh token");
+            return Unauthorized(new { error = "User not found" });
+        }
 
         var revoked = await _refreshRepo.RevokeIfActiveAsync(stored.RefreshTokenId);
         if (!revoked)
-            return Unauthorized("Invalid refresh token");
+        {
+            _logger.LogWarning("Failed to revoke old refresh token");
+            return Unauthorized(new { error = "Token refresh failed" });
+        }
 
         var roles = await _userRoleRepo.GetRoleCodesByUserIdAsync(user.UserId);
         var permissions = await _userRoleRepo.GetPermissionCodesByUserIdAsync(user.UserId);
@@ -96,15 +117,16 @@ public class TokenController : ControllerBase
             DeviceFingerprint = fingerprint
         });
 
+        _logger.LogInformation($"Token refreshed successfully for user {user.UserId}");
+
         Response.Cookies.Append(
             "refreshToken",
             rawRefreshToken,
             new CookieOptions
             {
                 HttpOnly = true,
-                Secure = true,    
-                //SameSite = SameSiteMode.Strict,
-                SameSite = SameSiteMode.None,
+                Secure = !HttpContext.Request.IsHttps ? false : true,
+                SameSite = SameSiteMode.Strict,
                 Path = "/",
                 Expires = DateTime.UtcNow.AddDays(_jwtSettings.RefreshTokenDays)
             });

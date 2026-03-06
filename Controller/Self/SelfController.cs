@@ -17,10 +17,14 @@ namespace CRM_Backend.Controllers.Self
     public class SelfController : ControllerBase
     {
         private readonly IUserSelfService _self;
+        private readonly IMfaService _mfaService;
 
-        public SelfController(IUserSelfService self)
+        public SelfController(
+            IUserSelfService self,
+            IMfaService mfaService)
         {
             _self = self;
+            _mfaService = mfaService;
         }
 
         // --------------------------------------------------
@@ -87,6 +91,70 @@ namespace CRM_Backend.Controllers.Self
             return Ok(security);
         }
 
+        // --------------------------------------------------
+        // MULTI-FACTOR AUTHENTICATION
+        // --------------------------------------------------
 
+        /// <summary>
+        /// Enable MFA for authenticated user (optional feature)
+        /// </summary>
+        /// <remarks>
+        /// MFA types available: EMAIL, SMS, AUTHENTICATOR
+        /// User must provide password for verification
+        /// </remarks>
+        /// <response code="200">MFA enabled successfully with recovery codes</response>
+        /// <response code="400">Invalid MFA type or MFA already enabled</response>
+        /// <response code="401">Invalid password</response>
+        [HttpPost("mfa/enable")]
+        [HasPermission("USER_UPDATE_SELF")]
+        [ProducesResponseType(typeof(MfaResponseDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> EnableMfa([FromBody] MfaRequestDto request)
+        {
+            var userId = User.GetUserId();
+            var result = await _mfaService.EnableMfaAsync(userId, request.MfaType, request.Password);
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Disable MFA for authenticated user
+        /// </summary>
+        /// <remarks>
+        /// User must provide password for verification
+        /// This is permanent - user will need to re-enable MFA to use it again
+        /// </remarks>
+        /// <response code="200">MFA disabled successfully</response>
+        /// <response code="400">MFA not currently enabled</response>
+        /// <response code="401">Invalid password</response>
+        [HttpPost("mfa/disable")]
+        [HasPermission("USER_UPDATE_SELF")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> DisableMfa([FromBody] DisableMfaRequestDto request)
+        {
+            var userId = User.GetUserId();
+            await _mfaService.DisableMfaAsync(userId, request.Password);
+            return Ok(new { message = "MFA has been disabled successfully" });
+        }
+
+        /// <summary>
+        /// Get MFA status for authenticated user
+        /// </summary>
+        /// <response code="200">Returns MFA status and type</response>
+        [HttpGet("mfa/status")]
+        [HasPermission("USER_VIEW_SELF")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetMfaStatus()
+        {
+            var userId = User.GetUserId();
+            var (enabled, type) = await _mfaService.GetMfaStatusAsync(userId);
+            return Ok(new
+            {
+                mfaEnabled = enabled,
+                mfaType = type
+            });
+        }
     }
 }

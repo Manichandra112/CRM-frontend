@@ -11,7 +11,7 @@ namespace CRM_Backend.Migrations
             // Enable citext extension (safe if already exists)
             migrationBuilder.Sql("CREATE EXTENSION IF NOT EXISTS citext;");
 
-            // Change email column to citext
+            // Change email column to citext for efficient case-insensitive searches
             migrationBuilder.AlterColumn<string>(
                 name: "email",
                 table: "users",
